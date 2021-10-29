@@ -5,7 +5,6 @@ export interface IAccount {
   isPendingUpdate: boolean;
   latestHealthScore?: string;
   data?: {};
-  isLiquidatable?: boolean;
 }
 
 // DOCUMENT DEFS //
@@ -18,7 +17,6 @@ enum PropertyNames {
   IS_PENDING_UPDATE = "isPendingUpdate",
   LATEST_HEALTH_SCORE = "latestHealthScore",
   DATA = "data",
-  IS_LIQUIDATABLE = "isLiquidatable",
 }
 
 // MODEL DEFS //
@@ -29,11 +27,10 @@ export interface IAccountModel extends Model<IAccountDoc> {
 
 // SCHEMA DEFS //
 const AccountSchemaFields: Record<keyof IAccount, any> = {
-  address: String,
-  isPendingUpdate: Boolean,
-  latestHealthScore: String,
+  address: { type: String, required: true, index: { unique: true } },
+  isPendingUpdate: { type: Boolean, default: false },
+  latestHealthScore: { type: String, required: false },
   data: {},
-  isLiquidatable: Boolean,
 };
 
 const schemaOpts = {

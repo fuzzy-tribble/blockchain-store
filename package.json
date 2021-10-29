@@ -5,7 +5,13 @@
   "license": "MIT",
   "scripts": {
     "start": "TODO",
-    "test": "./node_modules/.bin/mocha ./__test__/*.test.ts"
+    "test": "./node_modules/.bin/mocha -r ts-node/register ./__test__/*.test.ts",
+    "clean:stores": "",
+    "clean:events": "",
+    "clean:accounts": "",
+    "clean:markets": "",
+    "clean:testdb": "",
+    "clean:all": ""
   },
   "dependencies": {
     "bignumber.js": "^9.0.1",

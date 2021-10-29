@@ -1,29 +1,33 @@
 import "./lib/env";
+import clients from "./clients";
+import eventSocket from "./helpers/socket-helpers";
+import db from "./helpers/db-helpers";
+
 import AccountStore from "./lib/account-store";
-import { socketConnect } from "./helpers/socket-helpers";
-import { clientsList } from "./clients";
-import { Client } from "./lib/types";
-import { Server } from "socket.io";
-import BlockchainDb from "./helpers/db-helpers";
 
 async function start() {
-  const clients: Client[] = clientsList;
   const accountStores: AccountStore[] = [];
-  const db: BlockchainDb = new BlockchainDb();
 
-  const eventSocket: Server = await socketConnect(db);
+  await db.ready();
+  await eventSocket.ready();
 
-  // Setup clients (connect to bc and event sockets)
   const promises = clients.map(async (client) => {
-    return await client.setup(eventSocket);
+    return await client.setup();
   });
   await Promise.all(promises);
 
   clients.map((client) => {
-    // Start Account Store for each client
-    let accountStore = new AccountStore(client, db);
-    accountStores.push(accountStore);
-    accountStore.start();
+    if (client.conf.accountStoreIsEnabled) {
+      // Start Account Store
+      // let accountStore = new AccountStore(client, db);
+      // accountStores.push(accountStore);
+      // accountStore.start();
+    }
+
+    if (client.conf.marketStoreIsEnabled) {
+      // Start Market Store
+      console.log("TODO - implement market store");
+    }
   });
 }
 

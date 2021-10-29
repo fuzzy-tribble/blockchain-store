@@ -1,45 +1,50 @@
-// TODO - cleanup
-
 import { EventFilter } from "ethers";
 import { Server } from "socket.io";
 import BlockchainNetwork, {
   Network,
   Protocol,
 } from "../helpers/blockchain-helpers";
-import BigNumber from "bignumber.js";
-import { Account } from "../models/account";
+import db, { BlockchainStoreDb } from "../helpers/db-helpers";
+import eventSocket, { EventSocket } from "../helpers/socket-helpers";
 
 // ============ Types ============
+
+// TODO - fix this stupid shit
+export type DbBn = {
+  type: "BigNumber";
+  hex: string;
+};
+
+// ===============================
+
 // ============ Enums ============
-export enum ServerEventNames {
-  isLiquidatableAccount = "isLiquidatableAccount",
-  isRiskyAccount = "isRiskyAccount",
-  isArbitragable = "isArbitragable",
-  isYieldFarmerTrigger = "isYieldFarmerTrigger",
-}
+// ===============================
+
 // ============ Constants ============
+
 export const DAILY_MS: number = 60 * 60 * 24 * 1000;
 export const HOURLY_MS: number = 60 * 60 * 1000;
 export const FIVE_MINS_IN_MS: number = 60 * 5 * 1000;
+
+// ==================================
+
 // ============ Interfaces ============
-// export interface ClientAccount {
-//   address: string;
-//   lastUpdated: number;
-//   isPendingUpdate: boolean;
-//   latestHealthScore?: string;
-//   data?: {};
-//   isLiquidatable?: boolean;
-// }
 
 export interface ClientConf {
   name: string;
+
+  accountStoreIsEnabled: boolean;
+  marketStoreIsEnabled: boolean;
+
   bcNetwork: Network;
   bcProtocol: Protocol;
   rpcUrl: string;
+
   maxBlockQueryChunkSize: number;
   getNewUsersPollFreqMs: number;
   checkUpdateActiveUsersPollFreqMs: number;
   activeUserDataBaseUpdateFrequencyMs: number;
+
   contractAddress: string;
   contractAbi: unknown;
   ifaceAbi?: unknown;
@@ -53,50 +58,23 @@ export interface ClientConf {
 export abstract class Client {
   public conf: ClientConf;
   public bcNetwork: BlockchainNetwork;
-  public eventSocket: Server | null;
+  public bcDb: BlockchainStoreDb;
+  public eventSocket: EventSocket;
   public lastBlockNumChecked: number;
 
   constructor(conf: ClientConf) {
     this.conf = conf;
     this.bcNetwork = new BlockchainNetwork(this.conf);
+    this.bcDb = db;
+    this.eventSocket = eventSocket;
     this.lastBlockNumChecked = 0;
-    this.eventSocket = null;
   }
 
-  abstract setup(eventSocket: Server): void;
+  abstract setup(): void;
 
   // FOR ACCOUNT STORE
-  abstract getNewUsers(): Promise<ClientAccount[]>;
-  abstract updateActiveUsers(
-    activeUsers: ClientAccount[]
-  ): Promise<ClientAccount[]>;
-}
-
-// TODO - fix this stupid shit
-export type DbBn = {
-  type: "BigNumber";
-  hex: string;
-};
-
-export type AaveUserAccountData = {
-  timestamp?: number;
-  totalCollateralETH?: DbBn;
-  totalDebtETH?: DbBn;
-  availableBorrowsETH?: DbBn;
-  currentLiquidationThreshold?: DbBn;
-  ltv?: DbBn;
-  healthFactor?: DbBn;
-  [otherOptions: string]: unknown;
-};
-
-export type AaveUserConfiguration = {
-  timestamp: number;
-  "0"?: DbBn;
-  [otherOptions: string]: unknown;
-};
-export interface AaveClientAccount extends ClientAccount {
-  data?: {
-    getUserAccountData: AaveUserAccountData[];
-    getUserConfiguration: AaveUserConfiguration[];
-  };
+  // abstract getNewUsers(): Promise<ClientAccount[]>;
+  // abstract updateActiveUsers(
+  //   activeUsers: ClientAccount[]
+  // ): Promise<ClientAccount[]>;
 }

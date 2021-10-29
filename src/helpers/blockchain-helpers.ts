@@ -94,6 +94,12 @@ export default class BlockchainNetwork {
       message: `Querying blockchain network for events from block ${fromBlock} to block ${toBlock}...`,
     });
 
+    // TODO - LIMIT CHUNK SIZE AND LET KNOW IN LOGS
+    const chunkSize = toBlock - fromBlock;
+    if (chunkSize > this.clientConf.maxBlockQueryChunkSize) {
+      chunkSize = latestBlock - this.conf.maxBlockQueryChunkSize;
+    }
+
     try {
       const networkEvents: Event[] = await this.contract.queryFilter(
         eventFilter,

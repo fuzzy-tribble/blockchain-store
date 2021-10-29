@@ -3,20 +3,22 @@ import "./env";
 import { utils } from "ethers";
 import { ClientConf } from "./types";
 
-export const serverConfigs = {
-  port: 3000,
+export const eventSocketConfigs = {
   url: "http://127.0.0.1",
-  eventSocketPort: 3001,
-  eventSocketUrl: "http://127.0.0.1",
+  port: 3001,
 };
 
 export const databaseConfigs = {
-  filename: "./data/db.json",
+  url: "mongodb://127.0.0.1:27017",
+  accountstoreCollection: "/accountstore",
+  marketstoreCollection: "/marketstore",
 };
 
 export const clientConfigs: { [name: string]: ClientConf } = {
   aaveMainnet: {
     name: "aaveMainnet",
+    marketStoreIsEnabled: false,
+    accountStoreIsEnabled: true,
     bcNetwork: "mainnet",
     bcProtocol: "aave",
     rpcUrl: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
@@ -892,6 +894,8 @@ export const clientConfigs: { [name: string]: ClientConf } = {
   aaveTestnet: {
     // https://kovan.etherscan.io/address/0xe0fba4fc209b4948668006b2be61711b7f465bae
     name: "aaveTestnet",
+    marketStoreIsEnabled: false,
+    accountStoreIsEnabled: true,
     bcNetwork: "kovan",
     bcProtocol: "aave",
     rpcUrl: `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`,

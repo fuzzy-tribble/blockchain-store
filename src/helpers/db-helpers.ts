@@ -1,134 +1,75 @@
-import { JsonDB } from "node-json-db";
-import { Config } from "node-json-db/dist/lib/JsonDBConfig";
-import { DataError } from "node-json-db/dist/lib/Errors";
-
+import { Mongoose } from "mongoose";
 import { databaseConfigs } from "../lib/config";
-import { ClientAccount, Network, Protocol } from "../lib/types";
 import Logger from "../lib/logger";
+import { Event, Account } from "../models";
+import { IAccount } from "../models/account";
 
-// TODO - switch out jsondb/lowdb for mongo
-
-export default class BlockchainDb {
-  public db: JsonDB;
-  public accountsDataPath: string;
-  public eventsDataPath: string;
+export class BlockchainStoreDb {
+  public db: Mongoose;
 
   constructor() {
-    // TODO - clean any existing files bc if not {} db wont load
-    const config: Config = new Config(
-      databaseConfigs.filename,
-      true,
-      false,
-      "/"
-    );
-    this.db = new JsonDB(config);
-    this.accountsDataPath = "/accounts";
-    this.eventsDataPath = "/events";
+    this.db = new Mongoose();
   }
 
-  // ACCOUNT DATA //
+  ready = async (url: string = databaseConfigs.url) => {
+    Logger.info({
+      at: "BlockchainDb#ready",
+      message: `Attempting to connect to db at: ${url}`,
+    });
+    await this.db.connect(url);
+    Logger.info({
+      at: "BlockchainDb#ready",
+      message: "Connected. Ready to go.",
+    });
+  };
 
-  updateAccountsData = (
-    network: Network,
-    protocol: Protocol,
-    data: ClientAccount[]
-  ): boolean => {
-    let dataPath = `${this.accountsDataPath}/${network}/${protocol}`;
+  addEvent = async (eventName: string, eventData: any) => {
     try {
       Logger.info({
-        at: "BlockchainDatabase#updateAccountsData",
-        message: `Updating data at: ${dataPath}...`,
+        at: "BlockchainDb#addEvent",
+        message: `Adding event: ${eventName}...`,
       });
-      this.db.push(dataPath, data);
-      return true;
+      const newEvent = await Event.create({ name: eventName, data: eventData });
+      const res = newEvent.save();
+      Logger.info({
+        at: "BlockchainDb#addEvent",
+        message: `Event added: ${eventName}.`,
+        res: res,
+      });
     } catch (err) {
       Logger.error({
-        at: "BlockchainDatabase#updateAccountsData",
-        message: `Failed to update data at: ${dataPath}.`,
+        at: "BlockchainDb#addEvent",
+        message: `Error adding event: ${eventName}`,
         error: err,
       });
-      return false;
     }
   };
 
-  getAccountsData = (
-    network: Network,
-    protocol: Protocol,
-    dataPath: string = `${this.accountsDataPath}/${network}/${protocol}`
-  ): ClientAccount[] => {
-    let data: ClientAccount[] = [];
-    try {
-      Logger.info({
-        at: "BlockchainDatabase#getAccountsData",
-        message: `Getting data at: ${dataPath}...`,
-      });
-      data = this.db.getData(dataPath);
-    } catch (err) {
-      // Pass over this error (no accounts in db yet)
-      if ((err as DataError).id !== 5) {
-        Logger.error({
-          at: "BlockchainDatabase#getAccountsData",
-          message: `Failed to get data at: ${dataPath}.`,
-          error: err,
-        });
-        return [];
-      }
-    } finally {
-      Logger.info({
-        at: "BlockchainDatabase#getAccountsData",
-        message: `Done getting data at: ${dataPath}.`,
-      });
-      return data;
-    }
+  updateAccounts = async (accounts: IAccount[]) => {
+    console.log("TODO - updateAccounts  IMPLEMENT", accounts);
   };
 
-  // EVENT DATA //
-
-  updateEventsData = (
-    data: any,
-    dataPath: string = this.eventsDataPath
-  ): boolean => {
-    try {
-      Logger.info({
-        at: "BlockchainDatabase#updateEventsData",
-        message: `Updating data at: ${dataPath}...`,
-      });
-      this.db.push(dataPath, data, false);
-      return true;
-    } catch (err) {
-      Logger.error({
-        at: "BlockchainDatabase#updateEventsData",
-        message: `Failed to update data at: ${dataPath}.`,
-        error: err,
-      });
-      return false;
-    }
+  getLastBlockChecked = async (
+    network: string,
+    client: string
+  ): Promise<number> => {
+    console.log("TODO - getLastBlockChecked  IMPLEMENT", network, client);
+    return 0;
   };
 
-  getEventsData = (dataPath: string = this.eventsDataPath): any[] => {
-    let data: any[] = [];
-    try {
-      Logger.info({
-        at: "BlockchainDatabase#getEventsData",
-        message: `Getting data at: ${dataPath}...`,
-      });
-      data = this.db.getData(dataPath);
-    } catch (err) {
-      // Pass over this error (no accounts in db yet)
-      if ((err as DataError).id !== 5) {
-        Logger.error({
-          at: "BlockchainDatabase#getEventsData",
-          message: `Failed to get data at: ${dataPath}.`,
-          error: err,
-        });
-        return [];
-      }
-    } finally {
-      Logger.info({
-        at: "BlockchainDatabase#getEventsData",
-        message: `Done getting data at: ${dataPath}.`,
-      });
-      return data;
-    }
+  accountNeedsUpdate = async (account: IAccount): Promise<boolean> => {
+    console.log("TODO - accountNeedsUpdate  IMPLEMENT", account);
+    return false;
   };
+
+  // _isNewAccount()
+  // _isOldAccount()
+  // _isRiskyAccount()
+  // _getLatestAccountHealthScore()?
+  // _isLiquidatableAccount()
+  // getRiskyAccounts(keyName, maxPercentile or number of accounts)
 }
+
+const db = new BlockchainStoreDb();
+
+export default db;
