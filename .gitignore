@@ -21,4 +21,5 @@ logs
 *.log
 
 # ignore any tmp folders
-**/tmp
+tmp
+# **/tmp
