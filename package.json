@@ -5,14 +5,12 @@
   "license": "MIT",
   "scripts": {
     "start": "TODO",
-    "startdb": "yarn run json-server --watch ./data/db.json"
+    "test": "./node_modules/.bin/mocha ./__test__/*.test.ts"
   },
   "dependencies": {
     "bignumber.js": "^9.0.1",
     "dotenv-flow": "^3.2.0",
     "ethers": "^5.4.7",
-    "express": "^4.17.1",
-    "node-json-db": "^1.4.1",
     "socket.io": "^4.3.1",
     "winston": "^3.3.3"
   },
@@ -26,7 +24,6 @@
     "@types/socket.io-client": "^3.0.0",
     "axios": "^0.23.0",
     "chai": "^4.3.4",
-    "json-server": "^0.17.0",
     "mocha": "^9.1.3",
     "mongoose": "^6.0.12",
     "socket.io-client": "^4.3.2",

@@ -2,7 +2,6 @@ import { Document, model, Model, Schema } from "mongoose";
 
 export interface IAccount {
   address: string;
-  lastUpdated: number;
   isPendingUpdate: boolean;
   latestHealthScore?: string;
   data?: {};
@@ -11,12 +10,11 @@ export interface IAccount {
 
 // DOCUMENT DEFS //
 export interface IAccountDoc extends IAccount, Document {
-  getCompleteName(): string;
+  // TODO - functions for specific documents
 }
 
 enum PropertyNames {
   ADDRESS = "address",
-  LAST_UPDATED = "lastUpdated",
   IS_PENDING_UPDATE = "isPendingUpdate",
   LATEST_HEALTH_SCORE = "latestHealthScore",
   DATA = "data",
@@ -32,14 +30,19 @@ export interface IAccountModel extends Model<IAccountDoc> {
 // SCHEMA DEFS //
 const AccountSchemaFields: Record<keyof IAccount, any> = {
   address: String,
-  lastUpdated: Number,
   isPendingUpdate: Boolean,
   latestHealthScore: String,
   data: {},
   isLiquidatable: Boolean,
 };
 
-const AccountSchema = new Schema(AccountSchemaFields);
+const schemaOpts = {
+  // Make Mongoose use Unix time (seconds since Jan 1, 1970)
+  // timestamps: { currentTime: () => Math.floor(Date.now() / 1000) },
+  timestamps: true,
+};
+
+const AccountSchema = new Schema(AccountSchemaFields, schemaOpts);
 
 // METHODS //
 // TODO
