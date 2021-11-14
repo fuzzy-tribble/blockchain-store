@@ -1,8 +1,6 @@
-import { DaiPriceOracle } from "@dydxprotocol/solo/dist/build/wrappers/DaiPriceOracle";
 import { Document, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
-import { Client, Network } from "../lib/types";
-
+import { ClientNames, NetworkNames } from "../lib/types";
 interface ITokenPrice {
   price: string; // price in eth?
   timestamp: number;
@@ -19,8 +17,8 @@ export interface IToken {
 }
 
 export interface IReserve {
-  client: Client;
-  network: Network;
+  client: ClientNames;
+  network: NetworkNames;
   address: string;
   token1: IToken;
   token2?: IToken;
@@ -38,8 +36,11 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface IReserveModel extends Model<IReserveDoc> {
-  upsertMany(reserves: IReserve[]): Promise<number>;
-  findByClientNetwork(client: Client, network: Network): Promise<IReserve[]>;
+  addData(reserves: Array<IReserve[]>): Promise<number>;
+  findByClientNetwork(
+    client: ClientNames,
+    network: NetworkNames
+  ): Promise<IReserve[]>;
   propertyNames: typeof PropertyNames;
 }
 
@@ -62,8 +63,8 @@ const ReserveSchema = new Schema(ReserveSchemaFields, schemaOpts);
 ReserveSchema.index({ client: 1, network: 1, address: 1 }, { unique: true });
 
 ReserveSchema.statics.findByClientNetwork = async function (
-  client: Client | null = null,
-  network: Network | null = null
+  client: ClientNames | null = null,
+  network: NetworkNames | null = null
 ): Promise<IReserve[]> {
   let reserves: IReserve[] = [];
   try {
@@ -90,7 +91,7 @@ ReserveSchema.statics.findByClientNetwork = async function (
   }
 };
 
-ReserveSchema.statics.upsertMany = async function (
+ReserveSchema.statics.addData = async function (
   reserves: Array<IReserve>
 ): Promise<number> {
   let numChanged = 0;

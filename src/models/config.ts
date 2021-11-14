@@ -1,18 +1,11 @@
 import { Document, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
-import { Client, Network } from "../lib/types";
-
+import { ClientFunction, ClientNames, NetworkNames } from "../lib/types";
 export interface IConfig {
-  client: Client;
-  network: Network;
-  accountStore: {
-    isEnabled: boolean;
-    [key: string]: any;
-  };
-  reserveStore: {
-    isEnabled: boolean;
-    [key: string]: any;
-  };
+  client: ClientNames;
+  network: NetworkNames;
+  pollFunctions: Array<ClientFunction>;
+  listenerNames: Array<string>;
   dataSources: {
     blockchain: {
       rpcUrl?: string;
@@ -37,14 +30,17 @@ export interface IConfigDoc extends IConfig, Document {}
 enum PropertyNames {
   CLIENT = "client",
   NETWORK = "network",
-  ACCOUNT_STORE = "accountStore",
-  RESERVE_STORE = "reserveStore",
+  POLL_FUNCTIONS = "pollFunctions",
+  LISTENER_NAMES = "listenerNames",
   DATA_SOURCES = "dataSources",
 }
 
 // MODEL DEFS //
 export interface IConfigModel extends Model<IConfigDoc> {
-  findByClientNetwork(client: Client, network: Network): Promise<IConfigDoc>;
+  findByClientNetwork(
+    client: ClientNames,
+    network: NetworkNames
+  ): Promise<IConfigDoc>;
   propertyNames: typeof PropertyNames;
 }
 
@@ -52,8 +48,8 @@ export interface IConfigModel extends Model<IConfigDoc> {
 const ConfigSchemaFields: Record<keyof IConfig, any> = {
   client: { type: String, required: true },
   network: { type: String, required: true },
-  accountStore: { type: Map, required: true },
-  reserveStore: { type: Map, required: true },
+  pollFunctions: { type: Schema.Types.Mixed, required: true },
+  listenerNames: { type: Schema.Types.Mixed, required: true },
   dataSources: { type: Schema.Types.Mixed, required: true },
 };
 
@@ -66,8 +62,8 @@ const ConfigSchema = new Schema(ConfigSchemaFields, schemaOpts);
 ConfigSchema.index({ client: 1, network: 1 }, { unique: true });
 
 ConfigSchema.statics.findByClientNetwork = async function (
-  client: Client,
-  network: Network
+  client: ClientNames,
+  network: NetworkNames
 ): Promise<IConfig | null> {
   let conf: IConfig | null = null;
   try {

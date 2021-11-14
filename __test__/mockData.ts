@@ -1,5 +1,11 @@
-import { IEvent, IReserve } from "../src/models";
+import { CollectionNames, IConfig, IEvent, IReserve } from "../src/models";
 import { clientConfigs } from "../config.default";
+import {
+  ClientFunctionResult,
+  ClientNames,
+  NetworkNames,
+} from "../src/lib/types";
+import Client from "../src/lib/client";
 
 export const mongodb_test_uri = "mongodb://127.0.0.1:27017/test";
 
@@ -75,8 +81,8 @@ export const mockEvents: Array<IEvent> = [
   },
   {
     name: "different",
-    client: "aave",
-    network: "polygon",
+    client: ClientNames.AAVE,
+    network: NetworkNames.POLYGON,
     data: { bladida: "slemkla" },
   },
 ];
@@ -84,8 +90,8 @@ export const mockEvents: Array<IEvent> = [
 export const mockReserves: Array<IReserve> = [
   // FROM AAVE
   {
-    client: "aave",
-    network: "mainnet",
+    client: ClientNames.AAVE,
+    network: NetworkNames.MAINNET,
     address:
       "0x0000000000085d4780b73119b644ae5ecd22b3760xb53c1a33016b2dc2ff3653530bff1848a515c8c5",
     token1: {
@@ -98,8 +104,8 @@ export const mockReserves: Array<IReserve> = [
   },
   // FROM SUSHISWAP
   {
-    client: "sushiswap",
-    network: "mainnet",
+    client: ClientNames.SUSHISWAP,
+    network: NetworkNames.MAINNET,
     address: "0x055cedfe14bce33f985c41d9a1934b7654611aac",
     token1: {
       address: "0x6b175474e89094c44da98b954eedeac495271d0f",
@@ -115,8 +121,8 @@ export const mockReserves: Array<IReserve> = [
     },
   },
   {
-    client: "sushiswap",
-    network: "mainnet",
+    client: ClientNames.SUSHISWAP,
+    network: NetworkNames.MAINNET,
     address: "0x05767d9ef41dc40689678ffca0608878fb3de906",
     token1: {
       address: "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
@@ -234,3 +240,48 @@ export const mockSushiswapTokenData = [
     },
   ],
 ];
+
+const conf: IConfig = {
+  client: ClientNames.AAVE,
+  network: NetworkNames.MAINNET,
+  pollFunctions: [
+    { name: "mockPollFunction1", frequency: 1 * 1000 },
+    { name: "mockPollFunction2", frequency: 2 * 1000 },
+  ],
+  listenerNames: [],
+  dataSources: {
+    blockchain: {
+      rpcUrl: "",
+    },
+    apis: {
+      endpoint: "",
+    },
+    graphql: {
+      endpoint: "",
+      queries: {},
+    },
+  },
+};
+export class MockClient extends Client {
+  constructor() {
+    super(conf);
+  }
+  mockPollFunction1 = async (): Promise<ClientFunctionResult> => {
+    return {
+      status: true,
+      client: this.conf.client,
+      network: this.conf.network,
+      collection: CollectionNames.TEST,
+      data: "mockPollFunction1 result data",
+    };
+  };
+  mockPollFunction2 = async () => {
+    return {
+      status: true,
+      client: this.conf.client,
+      network: this.conf.network,
+      collection: CollectionNames.TEST,
+      data: "mockPollFunction2 result data",
+    };
+  };
+}

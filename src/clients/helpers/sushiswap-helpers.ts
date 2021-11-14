@@ -1,4 +1,4 @@
-import { Client, Network } from "../../lib/types";
+import { ClientNames, NetworkNames } from "../../lib/types";
 import { IReserve } from "../../models";
 
 export interface SushiApiPair {
@@ -20,8 +20,8 @@ export interface SushiApiPair {
 }
 
 export const formatPairingsFromApi = (
-  client: Client,
-  network: Network,
+  client: ClientNames,
+  network: NetworkNames,
   pairingsList: SushiApiPair[]
 ) => {
   const formattedReserves = pairingsList.map((pairing) => {
@@ -34,14 +34,18 @@ export const formatPairingsFromApi = (
         symbol: pairing.Token_1_symbol,
         name: pairing.Token_1_name,
         decimals: pairing.Token_1_decimals,
-        priceHistory: [{ price: pairing.Token_1_price, timestamp: Date.now() }],
+        priceHistory: [
+          { price: pairing.Token_1_price.toString(), timestamp: Date.now() },
+        ],
       },
       token2: {
         address: pairing.Token_2_contract,
         symbol: pairing.Token_2_symbol,
         name: pairing.Token_2_name,
         decimals: pairing.Token_2_decimals,
-        priceHistory: [{ price: pairing.Token_2_price, timestamp: Date.now() }],
+        priceHistory: [
+          { price: pairing.Token_2_price.toString(), timestamp: Date.now() },
+        ],
       },
     };
     return reserve;

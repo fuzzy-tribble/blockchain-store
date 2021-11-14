@@ -1,9 +1,9 @@
 import { Document, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
-import { Client, ClientAccount, Network } from "../lib/types";
+import { ClientNames, NetworkNames } from "../lib/types";
 export interface IAccount {
-  client: Client;
-  network: Network;
+  client: ClientNames;
+  network: NetworkNames;
   address: string;
   data?: Array<Record<any, any>>;
 }
@@ -22,11 +22,7 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface IAccountModel extends Model<IAccountDoc> {
-  upsertMany(
-    client: Client,
-    network: Network,
-    accounts: Array<ClientAccount>
-  ): Promise<number>;
+  addData(accounts: Array<IAccount[]>): Promise<number>;
   findAccountsOlderThan(age: number): Promise<IAccountDoc[]>;
   propertyNames: typeof PropertyNames;
 }
@@ -50,10 +46,8 @@ const AccountSchema = new Schema(AccountSchemaFields, schemaOpts);
 // Compound index must be unique
 AccountSchema.index({ client: 1, network: 1, address: 1 }, { unique: true });
 
-AccountSchema.statics.upsertMany = async function (
-  network: Network,
-  client: Client,
-  accounts: Array<ClientAccount>
+AccountSchema.statics.addData = async function (
+  accounts: IAccount[]
 ): Promise<number> {
   let numChanged = 0;
   try {
@@ -65,8 +59,8 @@ AccountSchema.statics.upsertMany = async function (
       return {
         updateOne: {
           filter: {
-            client: client,
-            network: network,
+            client: account.client,
+            network: account.network,
             address: account.address,
           },
           update: {
