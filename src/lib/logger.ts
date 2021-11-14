@@ -2,8 +2,8 @@
 import winston from "winston";
 import Transport from "winston-transport";
 
-const test = process.env.NODE_ENV === "test";
-
+// const test = process.env.NODE_ENV === "test";
+const test = true;
 class StackTransport extends Transport {
   log(info, callback) {
     setImmediate(() => {

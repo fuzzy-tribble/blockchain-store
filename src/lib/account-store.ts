@@ -1,7 +1,10 @@
+/**
+ * Monitor (poll and/or listen) for updates to client accounts
+ */
 import Logger from "./logger";
 import { delay } from "../helpers/delay";
 import { Client, ClientAccount } from "./types";
-import BlockchainDb from "../helpers/db-helpers";
+import db, { Database } from "../helpers/db-helpers";
 
 export enum AccountStoreEventNames {
   GetNewUsers = "GetNewUsers",
@@ -9,10 +12,10 @@ export enum AccountStoreEventNames {
 }
 export default class AccountStore {
   public client: Client;
-  public db: BlockchainDb;
+  public db: Database;
   public pollEventCounters: any;
 
-  constructor(client: Client, db: BlockchainDb) {
+  constructor(client: Client, db: Database) {
     this.client = client;
     this.db = db;
     this.pollEventCounters = {
@@ -27,6 +30,9 @@ export default class AccountStore {
       at: "AccountStore#start",
       message: "Starting account store",
     });
+
+    // start polls
+    // start listeners
 
     this._poll(
       AccountStoreEventNames.GetNewUsers,

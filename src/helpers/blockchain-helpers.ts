@@ -4,22 +4,48 @@ import { Contract, ethers, EventFilter, Signer, Event } from "ethers";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { BlockTag } from "@ethersproject/abstract-provider";
 import { Interface } from "@ethersproject/abi";
+import { IConfig } from "../models";
 
 import Logger from "../lib/logger";
-import { ClientConf } from "../lib/types";
 
 export type Network = "mainnet" | "kovan" | "rinkeby";
 export type Protocol = "aave" | "dydx" | "sushiswap";
+export interface IToken {
+  contract: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+}
+
+export interface ILiquidityReserve {
+  id: string;
+  assetAddress: IToken;
+  configuration?: string;
+  liquidityIndex?: string;
+}
+export interface ILiquidityPair {
+  pairId: string;
+  token1: IToken & {
+    price: number;
+    reserve: number;
+    derivedETH?: number;
+  };
+  token2: IToken & {
+    price: number;
+    reserve: number;
+    derivedETH?: number;
+  };
+}
 
 // TODO - consider implement chunking for large queries
-export default class BlockchainNetwork {
-  public clientConf: ClientConf;
+export default class Blockchain {
+  public clientConf: IConfig;
   public provider: JsonRpcProvider;
   public signer: Signer;
   public contract: Contract;
   public iface: Interface;
 
-  constructor(conf: ClientConf) {
+  constructor(conf: IConfig) {
     this.clientConf = conf;
     this.provider = new ethers.providers.JsonRpcProvider(
       this.clientConf.rpcUrl
@@ -36,7 +62,7 @@ export default class BlockchainNetwork {
   connect = async () => {
     Logger.info({
       client: this.clientConf.name,
-      at: "BlockchainNetwork#connect",
+      at: "Blockchain#connect",
       message: `Connecting to blockchain network at: ${this.clientConf.rpcUrl}`,
     });
 
@@ -48,7 +74,7 @@ export default class BlockchainNetwork {
       await this._verifyNetworkConnection();
       Logger.info({
         client: this.clientConf.name,
-        at: "BlockchainNetwork#getLatestBlock",
+        at: "Blockchain#getLatestBlock",
         message: `Connecting to blockchain network at: ${this.clientConf.rpcUrl}`,
       });
 
@@ -56,7 +82,7 @@ export default class BlockchainNetwork {
     } catch (err) {
       Logger.error({
         client: this.clientConf.name,
-        at: "BlockchainNetwork#getLatestBlock",
+        at: "Blockchain#getLatestBlock",
         message: "Coun't get latest block.",
         error: err,
       });
@@ -69,14 +95,14 @@ export default class BlockchainNetwork {
       const res = await this.provider.getNetwork();
       Logger.info({
         client: this.clientConf.name,
-        at: "BlockchainNetwork#verifyNetworkConnection",
+        at: "Blockchain#verifyNetworkConnection",
         message: `Connected to network: ${res.name}`,
       });
       return true;
     } catch (err) {
       Logger.info({
         client: this.clientConf.name,
-        at: "BlockchainNetwork#verifyNetworkConnection",
+        at: "Blockchain#verifyNetworkConnection",
         message: `Not connected to network: ${err}`,
       });
       return false;
@@ -90,7 +116,7 @@ export default class BlockchainNetwork {
   ): Promise<Event[]> => {
     Logger.info({
       client: this.clientConf.name,
-      at: "BlockchainNetwork#query",
+      at: "Blockchain#query",
       message: `Querying blockchain network for events from block ${fromBlock} to block ${toBlock}...`,
     });
 
@@ -108,14 +134,14 @@ export default class BlockchainNetwork {
       );
       Logger.info({
         client: this.clientConf.name,
-        at: "BlockchainNetwork#query",
+        at: "Blockchain#query",
         message: `Events found: ${networkEvents.length}`,
       });
       return networkEvents;
     } catch (err) {
       Logger.error({
         client: this.clientConf.name,
-        at: "BlockchainNetwork#query",
+        at: "Blockchain#query",
         message: "Query failed.",
         error: err,
       });

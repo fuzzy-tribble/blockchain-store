@@ -1,10 +1,11 @@
 import { Document, model, Model, Schema } from "mongoose";
-
+import Logger from "../lib/logger";
+import { Client, ClientAccount, Network } from "../lib/types";
 export interface IAccount {
+  client: Client;
+  network: Network;
   address: string;
-  isPendingUpdate: boolean;
-  latestHealthScore?: string;
-  data?: {};
+  data?: Array<Record<any, any>>;
 }
 
 // DOCUMENT DEFS //
@@ -13,24 +14,29 @@ export interface IAccountDoc extends IAccount, Document {
 }
 
 enum PropertyNames {
+  CLIENT = "client",
+  NETWORK = "network",
   ADDRESS = "address",
-  IS_PENDING_UPDATE = "isPendingUpdate",
-  LATEST_HEALTH_SCORE = "latestHealthScore",
   DATA = "data",
 }
 
 // MODEL DEFS //
 export interface IAccountModel extends Model<IAccountDoc> {
+  upsertMany(
+    client: Client,
+    network: Network,
+    accounts: Array<ClientAccount>
+  ): Promise<number>;
   findAccountsOlderThan(age: number): Promise<IAccountDoc[]>;
   propertyNames: typeof PropertyNames;
 }
 
 // SCHEMA DEFS //
 const AccountSchemaFields: Record<keyof IAccount, any> = {
-  address: { type: String, required: true, index: { unique: true } },
-  isPendingUpdate: { type: Boolean, default: false },
-  latestHealthScore: { type: String, required: false },
-  data: {},
+  client: { type: String, reqired: true },
+  network: { type: String, required: true },
+  address: { type: String, required: true },
+  data: { type: Array, required: true, default: [] },
 };
 
 const schemaOpts = {
@@ -41,32 +47,62 @@ const schemaOpts = {
 
 const AccountSchema = new Schema(AccountSchemaFields, schemaOpts);
 
-// METHODS //
-// TODO
-// ClientAccountSchema.methods.
+// Compound index must be unique
+AccountSchema.index({ client: 1, network: 1, address: 1 }, { unique: true });
 
-// STATICS //
-AccountSchema.static(
-  "findAccountsOlderThan",
-  async function findAccountsOlderThan(
-    timestamp: number
-  ): Promise<IAccountDoc[]> {
-    const accounts: IAccountDoc[] = await this.find({
-      lastUpdated: { $gte: timestamp },
+AccountSchema.statics.upsertMany = async function (
+  network: Network,
+  client: Client,
+  accounts: Array<ClientAccount>
+): Promise<number> {
+  let numChanged = 0;
+  try {
+    Logger.info({
+      at: "Database#updateAccounts",
+      message: `Updating accounts...`,
     });
-    return accounts;
+    let writes: Array<any> = accounts.map((account) => {
+      return {
+        updateOne: {
+          filter: {
+            client: client,
+            network: network,
+            address: account.address,
+          },
+          update: {
+            $push: { data: account.data },
+          },
+          upsert: true,
+        },
+      };
+    });
+    const res = await this.bulkWrite(writes);
+    numChanged = res.nInserted + res.nUpserted + res.nModified;
+    Logger.info({
+      at: "Database#updateAccounts",
+      message: `Accounts changed: ${numChanged}.`,
+      details: `nInserted: ${res.nInserted}, nUpserted: ${res.nUpserted},  nModified: ${res.nModified}`,
+    });
+    if (res.hasWriteErrors()) {
+      throw Error(
+        `Encountered the following write errors: ${res.getWriteErrors()}`
+      );
+    }
+  } catch (err) {
+    Logger.error({
+      at: "Database#updateAccounts",
+      message: `Error updating accounts.`,
+      error: err,
+    });
+  } finally {
+    return numChanged;
   }
-);
-
-// SO we can call create directly on the model with proper types
-AccountSchema.statics.create = (attr: IAccount) => {
-  return new Account(attr);
 };
 
 const Account = model<IAccountDoc, IAccountModel>(
   "accounts",
-  AccountSchema,
-  "accounts"
+  AccountSchema
+  // "accounts"
 );
 
 export { Account };

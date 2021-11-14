@@ -4,36 +4,46 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
+    "setup": "yarn clean:logs db:droptestdb db:updateconf",
     "start": "TODO",
-    "test": "./node_modules/.bin/mocha -r ts-node/register ./__test__/*.test.ts",
-    "clean:stores": "",
-    "clean:events": "",
-    "clean:accounts": "",
-    "clean:markets": "",
-    "clean:testdb": "",
-    "clean:all": ""
+    "start:dev": "TODO",
+    "test:one": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register",
+    "test:all": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register ./__test__/**/*.test.ts",
+    "clean:logs": "rm ./logs/*",
+    "update:configs": "NODE_ENV=test ts-node ./scripts/update-configs.ts"
   },
   "dependencies": {
+    "@aave/protocol-js": "^4.2.0",
+    "@apollo/client": "^3.4.16",
+    "@dydxprotocol/solo": "^0.41.0",
+    "@dydxprotocol/v3-client": "^1.5.0",
+    "axios": "^0.24.0",
     "bignumber.js": "^9.0.1",
+    "cross-fetch": "^3.1.4",
     "dotenv-flow": "^3.2.0",
     "ethers": "^5.4.7",
+    "graphql": "^16.0.1",
+    "mongoose-schema-extend": "^0.2.2",
+    "qs": "^6.10.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "socket.io": "^4.3.1",
     "winston": "^3.3.3"
   },
   "devDependencies": {
+    "@graphprotocol/graph-ts": "^0.23.1",
     "@types/chai": "^4.2.22",
     "@types/json-server": "^0.14.4",
     "@types/mocha": "^9.0.0",
     "@types/mongoose": "^5.11.97",
-    "@types/node": "^16.10.3",
+    "@types/node": "^16.11.6",
     "@types/socket.io": "^3.0.2",
     "@types/socket.io-client": "^3.0.0",
-    "axios": "^0.23.0",
     "chai": "^4.3.4",
     "mocha": "^9.1.3",
     "mongoose": "^6.0.12",
     "socket.io-client": "^4.3.2",
     "ts-node": "^10.2.1",
-    "typescript": "^4.4.3"
+    "typescript": "^4.4.4"
   }
 }
