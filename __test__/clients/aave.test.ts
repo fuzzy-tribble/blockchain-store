@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import mongoose from "mongoose";
 import Aave from "../../src/clients/aave";
+import { ClientNames, NetworkNames } from "../../src/lib/types";
 import { IConfig, Config } from "../../src/models";
 import { mockReserves, mongodb_test_uri } from "../mockData";
 
@@ -10,11 +11,15 @@ describe("aave-client", () => {
 
   before(async () => {
     await mongoose.connect(mongodb_test_uri);
-    conf = await Config.findByClientNetwork("aave", "mainnet");
+    conf = await Config.findByClientNetwork(
+      ClientNames.AAVE,
+      NetworkNames.MAINNET
+    );
     if (!conf) {
       throw Error("conf not found for client/network supplied.");
     }
     aave = new Aave(conf);
+    await aave.setup();
   });
 
   after(async () => {

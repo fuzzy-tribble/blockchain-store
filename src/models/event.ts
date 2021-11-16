@@ -1,11 +1,11 @@
 import { Document, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
-import { NetworkNames, ClientNames } from "../lib/types";
+import { NetworkNames, ClientNames, EventNames } from "../lib/types";
 export interface IEvent {
-  name: string;
+  name: EventNames;
+  network: NetworkNames | "";
+  client: ClientNames;
   data?: {};
-  network?: NetworkNames;
-  client?: ClientNames;
 }
 
 // DOCUMENT DEFS //
@@ -20,7 +20,7 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface IEventModel extends Model<IEventDoc> {
-  addData(events: Array<IEvent[]>): Promise<number>;
+  addData(events: IEvent[]): Promise<number>;
   findLiquidationEvents(): Promise<IEventDoc[]>;
   propertyNames: typeof PropertyNames;
 }
@@ -28,9 +28,9 @@ export interface IEventModel extends Model<IEventDoc> {
 // SCHEMA DEFS //
 const EventSchemaFields: Record<keyof IEvent, any> = {
   name: { type: String, required: true },
+  network: { type: String, required: true, default: "" },
+  client: { type: String, required: true, default: "" },
   data: { type: Object, required: false },
-  network: { type: String, required: false, default: "" },
-  client: { type: String, required: false, default: "" },
 };
 
 const schemaOpts = {
@@ -40,7 +40,7 @@ const schemaOpts = {
 const EventSchema = new Schema(EventSchemaFields, schemaOpts);
 
 EventSchema.statics.addData = async function (
-  events: Array<IEvent>
+  events: IEvent[]
 ): Promise<number> {
   let numChanged = 0;
   try {

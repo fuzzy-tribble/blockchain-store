@@ -3,20 +3,24 @@ import { CollectionNames } from "../models";
 
 // ============ Types ============
 
+// TODO - ethereum address, other contract address
+export type ContractAddress = string;
+
 // TODO - fix this stupid shit
 export type DbBn = {
   type: "BigNumber";
   hex: string;
 };
-
 // ===============================
 
 // ============ Enums ============
 export enum EventNames {
   LIQUIDATION = "liquidation",
+  PENDING_LIQUIDATION = "pending-liquidation",
+  ARBITRAGE = "arbitrage",
+  PENDING_ARBITRAGE = "pending-arbitrage",
   MAJOR_TOKEN_PRICE_CHANGE = "major-token-price-change",
   LIQUIDATABLE_ACCOUNT = "liquidatable-account",
-  ARBITRAGE = "arbitrage",
 }
 
 export enum NetworkNames {
@@ -34,6 +38,8 @@ export enum ClientNames {
   COMPOUND = "compound",
   MAKER = "maker",
   CURVE = "curve",
+  CHAINLINK = "chainlink",
+  COINGECKO = "coingecko",
 }
 // ===============================
 

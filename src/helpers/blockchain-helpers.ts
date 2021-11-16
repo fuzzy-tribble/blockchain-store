@@ -1,10 +1,16 @@
 import "../lib/env";
 
-import { Contract, ethers, EventFilter, Signer, Event } from "ethers";
-import { JsonRpcProvider } from "@ethersproject/providers";
+import {
+  Contract,
+  ethers,
+  EventFilter,
+  Signer,
+  Event as EthersEvent,
+} from "ethers";
+import { JsonRpcProvider, Listener } from "@ethersproject/providers";
 import { BlockTag } from "@ethersproject/abstract-provider";
 import { Interface } from "@ethersproject/abi";
-import { IConfig } from "../models";
+import { CollectionNames, Event, IConfig, updateDatabase } from "../models";
 
 import Logger from "../lib/logger";
 
@@ -37,7 +43,7 @@ export interface ILiquidityPair {
   };
 }
 
-// TODO - consider implement chunking for large queries
+// TODO - consider implement auto-chunking for large queries
 export default class Blockchain {
   public clientConf: IConfig;
   public provider: JsonRpcProvider;
@@ -59,7 +65,7 @@ export default class Blockchain {
     this.iface = new Interface(this.clientConf.ifaceAbi as string);
   }
 
-  connect = async () => {
+  connect = async (): Promise<boolean> => {
     Logger.info({
       client: this.clientConf.name,
       at: "Blockchain#connect",
@@ -90,26 +96,7 @@ export default class Blockchain {
     }
   };
 
-  _verifyNetworkConnection = async () => {
-    try {
-      const res = await this.provider.getNetwork();
-      Logger.info({
-        client: this.clientConf.name,
-        at: "Blockchain#verifyNetworkConnection",
-        message: `Connected to network: ${res.name}`,
-      });
-      return true;
-    } catch (err) {
-      Logger.info({
-        client: this.clientConf.name,
-        at: "Blockchain#verifyNetworkConnection",
-        message: `Not connected to network: ${err}`,
-      });
-      return false;
-    }
-  };
-
-  public query = async (
+  query = async (
     eventFilter: EventFilter,
     fromBlock: BlockTag = -100,
     toBlock?: BlockTag
@@ -121,10 +108,10 @@ export default class Blockchain {
     });
 
     // TODO - LIMIT CHUNK SIZE AND LET KNOW IN LOGS
-    const chunkSize = toBlock - fromBlock;
-    if (chunkSize > this.clientConf.maxBlockQueryChunkSize) {
-      chunkSize = latestBlock - this.conf.maxBlockQueryChunkSize;
-    }
+    // const chunkSize = toBlock - fromBlock;
+    // if (chunkSize > this.clientConf.maxBlockQueryChunkSize) {
+    //   chunkSize = latestBlock - this.conf.maxBlockQueryChunkSize;
+    // }
 
     try {
       const networkEvents: Event[] = await this.contract.queryFilter(
@@ -146,6 +133,51 @@ export default class Blockchain {
         error: err,
       });
       return [];
+    }
+  };
+
+  addListener = async (customEvent: string): Promise<Listener[]> => {
+    // TODO - implement
+    let filter = "";
+    this.contract.on(filter, (eventResult) =>
+      this._handleBlockchainListenerEvent(eventResult)
+    );
+    // Make sure its not a duplicate event that is subscribed to
+    return this.contract.listeners();
+  };
+
+  removeListener = async (contractEvent: string) => {
+    // TODO - implement
+    return this.contract.listeners();
+  };
+
+  private _handleBlockchainListenerEvent = async (eventData: any) => {
+    // TODO - will need to parse event data
+    updateDatabase({
+      status: true,
+      client: this.clientConf.client,
+      network: this.clientConf.network,
+      collection: CollectionNames.EVENTS,
+      data: eventData,
+    });
+  };
+
+  private _verifyNetworkConnection = async () => {
+    try {
+      const res = await this.provider.getNetwork();
+      Logger.info({
+        client: this.clientConf.name,
+        at: "Blockchain#verifyNetworkConnection",
+        message: `Connected to network: ${res.name}`,
+      });
+      return true;
+    } catch (err) {
+      Logger.info({
+        client: this.clientConf.name,
+        at: "Blockchain#verifyNetworkConnection",
+        message: `Not connected to network: ${err}`,
+      });
+      return false;
     }
   };
 }

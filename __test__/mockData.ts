@@ -1,8 +1,15 @@
-import { CollectionNames, IConfig, IEvent, IReserve } from "../src/models";
+import {
+  CollectionNames,
+  IConfig,
+  IEvent,
+  IReserve,
+  IToken,
+} from "../src/models";
 import { clientConfigs } from "../config.default";
 import {
   ClientFunctionResult,
   ClientNames,
+  EventNames,
   NetworkNames,
 } from "../src/lib/types";
 import Client from "../src/lib/client";
@@ -72,18 +79,39 @@ export const mockUpdatedAccountData = [
 
 export const mockEvents: Array<IEvent> = [
   {
-    name: "test event",
-    data: { somestuff: "slemkla" },
-  },
-  {
-    name: "test event",
-    data: { somestuff: "slemkla" },
-  },
-  {
-    name: "different",
+    name: EventNames.ARBITRAGE,
+    network: "",
     client: ClientNames.AAVE,
+    data: { somestuff: "slemkla" },
+  },
+  {
+    name: EventNames.ARBITRAGE,
+    network: "",
+    client: ClientNames.AAVE,
+    data: { somestuff: "slemkla" },
+  },
+  {
+    name: EventNames.LIQUIDATABLE_ACCOUNT,
+    network: NetworkNames.KOVAN,
+    client: ClientNames.AAVE,
+    data: { somestuff: "slemkla" },
+  },
+];
+
+export const mockTokens: Array<IToken> = [
+  {
+    address: "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
+    network: NetworkNames.MAINNET,
+    symbol: "CVX",
+    name: "Convex Token",
+    decimals: 18,
+  },
+  {
+    address: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
     network: NetworkNames.POLYGON,
-    data: { bladida: "slemkla" },
+    symbol: "WETH",
+    name: "Wrapped Ether",
+    decimals: 18,
   },
 ];
 
@@ -94,48 +122,59 @@ export const mockReserves: Array<IReserve> = [
     network: NetworkNames.MAINNET,
     address:
       "0x0000000000085d4780b73119b644ae5ecd22b3760xb53c1a33016b2dc2ff3653530bff1848a515c8c5",
-    token1: {
-      address:
-        "0x0000000000085d4780b73119b644ae5ecd22b3760xb53c1a33016b2dc2ff3653530bff1848a515c8c5",
-      symbol: "TUSD",
-      name: "TrueUSD",
-      decimals: 18,
-    },
+    tokens: [
+      {
+        address:
+          "0x0000000000085d4780b73119b644ae5ecd22b3760xb53c1a33016b2dc2ff3653530bff1848a515c8c5",
+        symbol: "TUSD",
+        network: NetworkNames.MAINNET,
+        name: "TrueUSD",
+        decimals: 18,
+      },
+    ],
   },
   // FROM SUSHISWAP
   {
     client: ClientNames.SUSHISWAP,
     network: NetworkNames.MAINNET,
     address: "0x055cedfe14bce33f985c41d9a1934b7654611aac",
-    token1: {
-      address: "0x6b175474e89094c44da98b954eedeac495271d0f",
-      symbol: "DAI",
-      name: "Dai Stablecoin",
-      decimals: 18,
-    },
-    token2: {
-      address: "0xdac17f958d2ee523a2206206994597c13d831ec7",
-      symbol: "USDT",
-      name: "Tether USD",
-      decimals: 6,
-    },
+    tokens: [
+      {
+        address: "0x6b175474e89094c44da98b954eedeac495271d0f",
+        network: NetworkNames.MAINNET,
+        symbol: "DAI",
+        name: "Dai Stablecoin",
+        decimals: 18,
+      },
+      {
+        address: "0xdac17f958d2ee523a2206206994597c13d831ec7",
+        network: NetworkNames.MAINNET,
+        symbol: "USDT",
+        name: "Tether USD",
+        decimals: 6,
+      },
+    ],
   },
   {
     client: ClientNames.SUSHISWAP,
     network: NetworkNames.MAINNET,
     address: "0x05767d9ef41dc40689678ffca0608878fb3de906",
-    token1: {
-      address: "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
-      symbol: "CVX",
-      name: "Convex Token",
-      decimals: 18,
-    },
-    token2: {
-      address: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-      symbol: "WETH",
-      name: "Wrapped Ether",
-      decimals: 18,
-    },
+    tokens: [
+      {
+        address: "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
+        network: NetworkNames.MAINNET,
+        symbol: "CVX",
+        name: "Convex Token",
+        decimals: 18,
+      },
+      {
+        address: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        network: NetworkNames.MAINNET,
+        symbol: "WETH",
+        name: "Wrapped Ether",
+        decimals: 18,
+      },
+    ],
   },
 ];
 

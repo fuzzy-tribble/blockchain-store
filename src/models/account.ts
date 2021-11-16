@@ -22,7 +22,7 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface IAccountModel extends Model<IAccountDoc> {
-  addData(accounts: Array<IAccount[]>): Promise<number>;
+  addData(accounts: IAccount[]): Promise<number>;
   findAccountsOlderThan(age: number): Promise<IAccountDoc[]>;
   propertyNames: typeof PropertyNames;
 }

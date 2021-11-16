@@ -44,4 +44,8 @@ export default class GqlClient {
       });
     }
   };
+
+  subscribe = async () => {
+    // TODO - subscribe (https://www.apollographql.com/docs/react/data/subscriptions/)
+  };
 }

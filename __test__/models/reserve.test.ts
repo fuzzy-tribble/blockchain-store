@@ -13,7 +13,7 @@ describe("reserve-model", () => {
   });
 
   it("should upsert reserves", async () => {
-    let nChanged = await Reserve.upsertMany(mockReserves);
+    let nChanged = await Reserve.addData(mockReserves);
     expect(nChanged).to.equal(mockReserves.length);
   });
   it("should find reserves by client, network", async () => {

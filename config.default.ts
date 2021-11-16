@@ -2,7 +2,52 @@ import "./src/lib/env";
 import { utils } from "ethers";
 import { IConfig } from "./src/models/config";
 import { gql } from "@apollo/client/core";
-import { ClientNames, NetworkNames } from "./src/lib/types";
+import { ClientNames, EventNames, NetworkNames } from "./src/lib/types";
+
+const coingeckoConfigs: IConfig = {
+  client: ,
+  network: ,
+  pollFunctions: [],
+  listenerNames: [],
+  dataSources: {
+    blockchain: {
+      rpcUrl: undefined,
+      lastBlockChecked: undefined
+    },
+    apis: {
+      // Free API* has a rate limit of 50 calls/minute
+      baseUrl: "https://api.coingecko.com/api/v3/",
+      allCoinsAndMarketsData: "https://api.coingecko.com/api/v3/coins/markets?vs_currency=eth&order=market_cap_desc&per_page=100&page=1&sparkline=true&price_change_percentage=1h%2C24h%2C7d%2C14d%2C30d%2C200d%2C1y",
+      exchangesListUrl: "https://api.coingecko.com/api/v3/coins/markets?vs_currency=eth&order=market_cap_desc&per_page=100&page=1&sparkline=true&price_change_percentage=1h%2C24h%2C7d%2C14d%2C30d%2C200d%2C1y",
+      allExchanges: "https://api.coingecko.com/api/v3/exchanges/list",
+      allBlockchainNetworks: "https://api.coingecko.com/api/v3/asset_platforms",
+      financeProducts: "https://api.coingecko.com/api/v3/finance_products",
+      financePlatorms: "https://api.coingecko.com/api/v3/finance_platforms",
+      trendingSearches: "https://api.coingecko.com/api/v3/search/trending",
+    },
+    graphql: {
+      endpoint: undefined,
+      queries: undefined
+    }
+  }
+}
+
+const chainlinkMainnetConfigs: IConfig = {
+  client: ClientNames.CHAINLINK,
+  network: NetworkNames.MAINNET,
+  pollFunctions: [],
+  listenerNames: [],
+  dataSources: {
+    blockchain: {
+      rpcUrl: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      maxBlockQueryChunkSize: 100,
+      contractAddress: "0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf",
+      contractAbi: [],
+    },
+    apis: {},
+    graphql: {},
+  },
+};
 
 const aaveMainnetConfigs: IConfig = {
   client: ClientNames.AAVE,
@@ -953,7 +998,7 @@ const sushiswapMainnet: IConfig = {
       frequency: 2 * (60 * 1000), // every 2 minutes
     },
   ],
-  listenerNames: ["onMajorTokenPriceChange"],
+  listenerNames: [EventNames.MAJOR_TOKEN_PRICE_CHANGE],
   dataSources: {
     blockchain: {},
     apis: {

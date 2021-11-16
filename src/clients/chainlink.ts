@@ -1,16 +1,15 @@
 import Client from "../lib/client";
-import { IConfig } from "../models";
+import { IConfig, IToken } from "../models";
 
 export default class Chainlink extends Client {
   constructor(conf: IConfig) {
     super(conf);
   }
 
-  getTokens = async (): Promise<void> => {
-    // TODO - not needed (tokens should automatically be added based on client reserves)
-  };
-
-  updateTokens = async (): Promise<void> => {
+  private _getLatestPriceFromBlockchain = async (
+    tokens: IToken[],
+    denomination
+  ): Promise<void> => {
     // TODO - update token prices from chainlink blockchain contract
   };
 }

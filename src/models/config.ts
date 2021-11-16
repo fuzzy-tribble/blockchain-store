@@ -9,6 +9,7 @@ export interface IConfig {
   dataSources: {
     blockchain: {
       rpcUrl?: string;
+      lastBlockChecked?: number;
       [key: string]: any;
     };
     apis: {
@@ -37,6 +38,10 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface IConfigModel extends Model<IConfigDoc> {
+  getLastBlockChecked(
+    client: ClientNames,
+    network: NetworkNames
+  ): Promise<number>;
   findByClientNetwork(
     client: ClientNames,
     network: NetworkNames
@@ -60,6 +65,13 @@ const schemaOpts = {
 const ConfigSchema = new Schema(ConfigSchemaFields, schemaOpts);
 
 ConfigSchema.index({ client: 1, network: 1 }, { unique: true });
+ConfigSchema.statics.getLastBlockChecked = async function (
+  client: ClientNames,
+  network: NetworkNames
+): Promise<number> {
+  // TODO - implement
+  return 0;
+};
 
 ConfigSchema.statics.findByClientNetwork = async function (
   client: ClientNames,

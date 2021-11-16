@@ -1,28 +1,12 @@
 import { Document, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
 import { ClientNames, NetworkNames } from "../lib/types";
-interface ITokenPrice {
-  price: string; // price in eth?
-  timestamp: number;
-  [x: string]: any;
-}
-
-export interface IToken {
-  address: string;
-  symbol: string;
-  name: string;
-  decimals: number;
-  priceHistory?: Array<ITokenPrice>;
-  [x: string]: any;
-}
-
+import { IToken, ITokenDoc, Token } from "./token";
 export interface IReserve {
   client: ClientNames;
   network: NetworkNames;
   address: string;
-  token1: IToken;
-  token2?: IToken;
-  token3?: IToken;
+  tokenIds: Array<number>;
 }
 
 // DOCUMENT DEFS //
@@ -36,7 +20,7 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface IReserveModel extends Model<IReserveDoc> {
-  addData(reserves: Array<IReserve[]>): Promise<number>;
+  addData(reserves: IReserve[]): Promise<number>;
   findByClientNetwork(
     client: ClientNames,
     network: NetworkNames
@@ -49,9 +33,7 @@ const ReserveSchemaFields: Record<keyof IReserve, any> = {
   client: { type: String, reqired: true },
   network: { type: String, required: true },
   address: { type: String, required: true },
-  token1: { type: Map, required: false },
-  token2: { type: Map, required: false, default: {} },
-  token3: { type: Map, required: false, default: {} },
+  tokenIds: { type: Array, required: false },
 };
 
 const schemaOpts = {
@@ -92,15 +74,17 @@ ReserveSchema.statics.findByClientNetwork = async function (
 };
 
 ReserveSchema.statics.addData = async function (
-  reserves: Array<IReserve>
+  reserves: IReserve[]
 ): Promise<number> {
-  let numChanged = 0;
+  let reservesNumChanged = 0;
   try {
     Logger.info({
       at: "Database#updateReserves",
       message: `Updating reserves...`,
     });
+    let tokens: IToken[] = [];
     let writes: Array<any> = reserves.map((reserve) => {
+      reserve.tokens.forEach((token) => tokens.push(token));
       return {
         updateOne: {
           filter: {
@@ -113,16 +97,18 @@ ReserveSchema.statics.addData = async function (
         },
       };
     });
-    const res = await this.bulkWrite(writes);
-    numChanged = res.nInserted + res.nUpserted + res.nModified;
+    const reserveRes = await this.bulkWrite(writes);
+    const tokenNumChanged = await Token.addData(tokens);
+    reservesNumChanged =
+      reserveRes.nInserted + reserveRes.nUpserted + reserveRes.nModified;
     Logger.info({
       at: "Database#updateReserves",
-      message: `Reserves changed: ${numChanged}.`,
-      details: `nInserted: ${res.nInserted}, nUpserted: ${res.nUpserted},  nModified: ${res.nModified}`,
+      message: `Reserves changed: ${reservesNumChanged}`,
+      reserveDetails: `nInserted: ${reserveRes.nInserted}, nUpserted: ${reserveRes.nUpserted},  nModified: ${reserveRes.nModified}`,
     });
-    if (res.hasWriteErrors()) {
+    if (reserveRes.hasWriteErrors()) {
       throw Error(
-        `Encountered the following write errors: ${res.getWriteErrors()}`
+        `Encountered the following write errors: ${reserveRes.getWriteErrors()}`
       );
     }
   } catch (err) {
@@ -132,9 +118,15 @@ ReserveSchema.statics.addData = async function (
       error: err,
     });
   } finally {
-    return numChanged;
+    return reservesNumChanged;
   }
 };
+
+ReserveSchema.post("validate", async function (reserveDoc: IReserveDoc) {
+  await Token.addData(reserveDoc.tokens as IToken[]);
+});
+
+// TODO - consider pruning unused tokens (annually or when db reaches certain size?)
 
 const Reserve = model<IReserveDoc, IReserveModel>("reserves", ReserveSchema);
 
