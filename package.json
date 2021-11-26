@@ -33,6 +33,7 @@
   "devDependencies": {
     "@graphprotocol/graph-ts": "^0.23.1",
     "@types/chai": "^4.2.22",
+    "@types/chai-as-promised": "^7.1.4",
     "@types/json-server": "^0.14.4",
     "@types/mocha": "^9.0.0",
     "@types/mongoose": "^5.11.97",
@@ -40,6 +41,7 @@
     "@types/socket.io": "^3.0.2",
     "@types/socket.io-client": "^3.0.0",
     "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
     "mocha": "^9.1.3",
     "mongoose": "^6.0.12",
     "socket.io-client": "^4.3.2",

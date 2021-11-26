@@ -33,7 +33,7 @@ const alignedWithColorsAndTime = winston.format.combine(
 
 const transports = [
   new StackTransport({
-    level: "error",
+    level: "info",
     handleExceptions: true,
   }),
   new winston.transports.File({

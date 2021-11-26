@@ -2,7 +2,7 @@
   "compileOnSave": true,
   "include": [
     "__test__/**/*.ts",
-    "src/**/*.ts", "tmp/graphql-query.test.ts", "tmp/aave.graphql.test.ts",
+    "src/**/*.ts", "tmp/subdocuments.ts", "tmp/graphql-query.test.ts", "tmp/aave.graphql.test.ts",
   ],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */

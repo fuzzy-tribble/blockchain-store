@@ -53,7 +53,7 @@ const aaveMainnetConfigs: IConfig = {
   client: ClientNames.AAVE,
   network: NetworkNames.MAINNET,
   pollFunctions: [],
-  listenerNames: [],
+  listenerNames: [EventNames.MAJOR_TOKEN_PRICE_CHANGE],
   dataSources: {
     blockchain: {
       rpcUrl: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,

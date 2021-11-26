@@ -4,6 +4,7 @@ import {
   IReserve,
   CollectionNames,
   Config,
+  IEvent,
 } from "../models";
 import Client from "../lib/client";
 import Blockchain from "../helpers/blockchain-helpers";
@@ -16,7 +17,7 @@ import {
   formatReservesFromGql,
   parseAccountsFromBorrowTransactionLogs,
 } from "./helpers/aave-helpers";
-import { ClientFunctionResult } from "../lib/types";
+import { ClientFunctionResult, EventNames } from "../lib/types";
 export default class Aave extends Client {
   public bc: Blockchain;
   public gql: GqlClient;
@@ -62,6 +63,23 @@ export default class Aave extends Client {
       collection: CollectionNames.RESERVES,
       data: {},
     };
+  };
+
+  handleEvent = async (event: IEvent) => {
+    switch (event.name) {
+      case EventNames.MAJOR_TOKEN_PRICE_CHANGE:
+        let accounts: IAccount[] = Account.findByClientNetworkToken();
+        this._updateAccountHealthScore(accounts);
+        break;
+    }
+    // TODO - if client/network reserves have token
+    // TODO - update client account health scores with that token
+  };
+
+  private _updateAccountsHealthScore = (accounts: IAccount[]) => {};
+  private _calculateAccountHealthFactor = (account: IAccount) => {
+    const userReserves = [{ totalCollateral: 39, totalBorrowed: 90 }];
+    let healthFactor = totalCollateral;
   };
 
   private _getAccountsFromBlockchain = async (

@@ -1,10 +1,17 @@
-import { Document, model, Model, Schema } from "mongoose";
+import {
+  Document,
+  InsertManyOptions,
+  InsertManyResult,
+  model,
+  Model,
+  Schema,
+} from "mongoose";
 import Logger from "../lib/logger";
 import { NetworkNames, ClientNames, EventNames } from "../lib/types";
 export interface IEvent {
   name: EventNames;
-  network: NetworkNames | "";
   client: ClientNames;
+  network?: NetworkNames;
   data?: {};
 }
 
@@ -25,11 +32,13 @@ export interface IEventModel extends Model<IEventDoc> {
   propertyNames: typeof PropertyNames;
 }
 
+Schema.Types.String.checkRequired((v) => typeof v === "string");
+
 // SCHEMA DEFS //
 const EventSchemaFields: Record<keyof IEvent, any> = {
   name: { type: String, required: true },
-  network: { type: String, required: true, default: "" },
-  client: { type: String, required: true, default: "" },
+  client: { type: String, enum: ClientNames, required: true },
+  network: { type: String, enum: NetworkNames, required: false },
   data: { type: Object, required: false },
 };
 
@@ -42,38 +51,34 @@ const EventSchema = new Schema(EventSchemaFields, schemaOpts);
 EventSchema.statics.addData = async function (
   events: IEvent[]
 ): Promise<number> {
-  let numChanged = 0;
+  let nInserted: number = 0;
+  let options: InsertManyOptions = {
+    ordered: false, // report any errors at the end
+    rawResult: true,
+  };
   try {
+    // TODO - insertMany should return type InsertManyResult with rawResult:true but doesn't
+    let res: any = await Event.insertMany(events, options);
+    nInserted = res.insertedCount | 0;
     Logger.info({
-      at: "Database#addEvents",
-      message: `Updating events...`,
+      at: "Database#postUpdateEvent",
+      message: `Events inserted: ${nInserted}`,
     });
-    let writes = events.map((event) => {
-      return {
-        insertOne: {
-          document: event,
-        },
-      };
+    res.mongoose.validationErrors?.forEach((err) => {
+      Logger.error({
+        at: "Database#addData",
+        message: `Error updating event.`,
+        error: err,
+      });
     });
-    const res = await this.bulkWrite(writes);
-    numChanged = res.nInserted;
-    Logger.info({
-      at: "Database#addEvents",
-      message: `Events changed: ${numChanged}.`,
-    });
-    if (res.hasWriteErrors()) {
-      throw Error(
-        `Encountered the following write errors: ${res.getWriteErrors()}`
-      );
-    }
   } catch (err) {
     Logger.error({
-      at: "Database#addEvents",
-      message: `Error adding events.`,
+      at: "Database#addData",
+      message: `Error updating events.`,
       error: err,
     });
   } finally {
-    return numChanged;
+    return nInserted;
   }
 };
 
