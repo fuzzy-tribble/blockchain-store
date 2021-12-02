@@ -1,21 +1,18 @@
+import { Document, FilterQuery, model, Model, Schema } from "mongoose";
+import { IToken, Token, ITokenDoc } from "./token";
+import { ClientNames, UpdateResult } from "../lib/types";
 import {
-  Document,
-  FilterQuery,
-  model,
-  Model,
-  QueryOptions,
-  Schema,
-} from "mongoose";
-import { IToken, Token } from "./token";
-import { ClientNames } from "../lib/types";
-import { defaultSchemaOpts, validateRequiredFields } from ".";
+  defaultQueryOptions,
+  defaultSchemaOpts,
+  updateValidation,
+} from "../helpers/db-helpers";
 import Logger from "../lib/logger";
 
 export interface ITokenPrice {
-  token: number | IToken;
-  priceInEth: number;
+  token: string | FilterQuery<ITokenDoc>;
+  priceInEth: string;
   source: ClientNames;
-  lastUpdated: number;
+  lastUpdated: string;
   [x: string]: any;
 }
 
@@ -28,11 +25,14 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface ITokenPriceModel extends Model<ITokenPriceDoc> {
-  addData(tokenPrices: ITokenPrice[]): Promise<number>;
+  addData(tokenPrices: ITokenPrice[]): Promise<UpdateResult>;
   findLatestTokenPriceFromSource(
     token: IToken,
     source: ClientNames
   ): Promise<ITokenPriceDoc | null>;
+  findPriceDiscrepanciesBySource(
+    source: ClientNames
+  ): Promise<PriceDiscrepancy | null>;
   propertyNames: typeof PropertyNames;
 }
 
@@ -50,14 +50,7 @@ TokenPriceSchema.index(
   { unique: true }
 );
 
-TokenPriceSchema.pre(["findOneAndUpdate", "updateOne"], function () {
-  validateRequiredFields(this.getUpdate() as ITokenPrice, [
-    "token",
-    "priceInEth",
-    "source",
-    "lastUpdated",
-  ]);
-});
+TokenPriceSchema.pre(["updateOne"], updateValidation);
 
 TokenPriceSchema.post(["findOneAndUpdate"], function (res) {
   Logger.info({
@@ -68,60 +61,59 @@ TokenPriceSchema.post(["findOneAndUpdate"], function (res) {
 
 TokenPriceSchema.statics.addData = async function (
   tokenPrices: ITokenPrice[]
-): Promise<number> {
-  let nChanged: number = 0;
-  let options: QueryOptions = {
-    // returnDocument: "after",
-    upsert: true,
-    runValidators: true,
-    new: true, // otherwise will fail on empty collection
+): Promise<UpdateResult> {
+  let updateRes: UpdateResult = {
+    upsertedCount: 0,
+    modifiedCount: 0,
+    matchedCount: 0,
+    invalidCount: 0,
+    upsertedIds: [],
+    modifiedIds: [],
   };
-  let summaryRes = {
-    nUpserted: 0,
-    nModified: 0,
-  };
-  try {
-    await Promise.all(
-      tokenPrices.map(async (tokenPrice) => {
-        let tokenId: number | undefined;
-        if (typeof tokenPrice.token !== "number") {
-          [tokenId] = await Token.addDataAndGetIds([tokenPrice.token]);
-        } else {
-          tokenId = tokenPrice.token;
-        }
+  await Promise.all(
+    tokenPrices.map(async (tokenPrice) => {
+      try {
+        let { upsertedIds, modifiedIds } = await Token.addData([
+          tokenPrice.token as IToken,
+        ]);
+        let tokenId = upsertedIds.concat(modifiedIds)[0];
         if (tokenId) {
+          tokenPrice["token"] = tokenId;
           let filter: FilterQuery<ITokenPriceDoc> = {
             token: tokenId,
             lastUpdated: tokenPrice.lastUpdated,
             source: tokenPrice.source,
           };
-          tokenPrice["token"] = tokenId;
-          let oneUpdatedRes = await TokenPrice.updateOne(
+
+          let doc = await TokenPrice.findOne(filter);
+          let res = await TokenPrice.updateOne(
             filter,
             tokenPrice,
-            options
+            defaultQueryOptions
           );
-          summaryRes.nUpserted =
-            summaryRes.nUpserted + oneUpdatedRes.upsertedCount;
-          summaryRes.nUpserted =
-            summaryRes.nUpserted + oneUpdatedRes.modifiedCount;
+          updateRes.upsertedCount = updateRes.upsertedCount + res.upsertedCount;
+          updateRes.modifiedCount = updateRes.modifiedCount + res.modifiedCount;
+          updateRes.matchedCount = updateRes.matchedCount + res.matchedCount;
+          doc ? updateRes.modifiedIds.push(doc.id) : "";
+          updateRes.upsertedIds.push(res.upsertedId.toString());
+        } else {
+          updateRes.invalidCount = updateRes.invalidCount + 1;
         }
-      })
-    );
-    Logger.info({
-      at: "Database#postUpdateToken",
-      message: `Tokens updated (nUpserted: ${summaryRes.nUpserted}, nModified: ${summaryRes.nModified})`,
-    });
-    nChanged = summaryRes.nUpserted + summaryRes.nModified;
-  } catch (err) {
-    Logger.error({
-      at: "Database#addData",
-      message: `Error updating tokens.`,
-      error: err,
-    });
-  } finally {
-    return nChanged;
-  }
+      } catch (err) {
+        updateRes.invalidCount = updateRes.invalidCount + 1;
+        Logger.error({
+          at: "Database#addData",
+          message: `Error updating token prices.`,
+          error: err,
+        });
+      }
+    })
+  );
+  Logger.info({
+    at: "Database#postUpdateToken",
+    message: `Tokens updated (nUpserted: ${updateRes.upsertedCount}, nModified: ${updateRes.modifiedCount})`,
+  });
+  return updateRes;
 };
 
 TokenPriceSchema.statics.findLatestTokenPriceFromSource = async function (
@@ -139,6 +131,29 @@ TokenPriceSchema.statics.findLatestTokenPriceFromSource = async function (
     .populate("token");
   // .lean();
   return latestTokenPrice;
+};
+
+// TODO - implement and move
+interface PriceDiscrepancy {
+  sourceA: ClientNames;
+  sourceB: ClientNames;
+  token: IToken;
+  discrepancy: number;
+}
+
+TokenPriceSchema.statics.findPriceDiscrepanciesBySource = async function (
+  source: ClientNames
+): Promise<PriceDiscrepancy | null> {
+  // TODO
+  // return {
+  //   token: 0398209,
+  //   prices: {
+  //     exchangeA: 038409.2,
+  //     exchangeB: 038409.2,
+  //     exchangeC: 038409.2,
+  //   }
+  // }
+  throw new Error("NOT IMPLEMENTED");
 };
 
 const TokenPrice = model<ITokenPriceDoc, ITokenPriceModel>(

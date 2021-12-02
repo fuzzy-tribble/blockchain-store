@@ -23,3 +23,6 @@ logs
 # ignore any tmp folders
 tmp
 # **/tmp
+
+# Mongo DB volume
+mongo-volume

@@ -4,17 +4,23 @@ import { IReserve, Reserve } from "../../src/models/reserve";
 import { Token } from "../../src/models/token";
 import {
   mockReserves,
+  mockReservesUpdated,
   mockInvalidReserves,
   mongodb_test_uri,
+  mockTokens,
 } from "../mockData";
 import Logger from "../../src/lib/logger";
 
 // Silence logs while running tests
 Logger.transports.forEach((t) => (t.silent = true));
 
+// // Display mongo logs
+// mongoose.set("debug", true);
+
 describe("Collection: reserves", () => {
   before(async () => {
     await mongoose.connect(mongodb_test_uri);
+    await mongoose.connection.dropDatabase();
   });
 
   beforeEach(async () => {
@@ -28,34 +34,31 @@ describe("Collection: reserves", () => {
     await mongoose.connection.close();
   });
 
-  it("should upsert RESERVES and return nChanged", async () => {
-    let nChanged = await Reserve.addData(mockReserves);
-    expect(nChanged).to.equal(mockReserves.length);
+  it("should upsert RESERVES", async () => {
+    let res = await Reserve.addData(mockReserves);
+    expect(res.modifiedCount + res.upsertedCount).to.equal(mockReserves.length);
   });
 
-  it("should upsert RESERVES and return ids", async () => {
-    let ids = await Reserve.addDataAndGetIds(mockReserves);
-    console.log(ids);
-    expect(ids.length).to.equal(mockReserves.length);
+  it("should upsert RESERVES already in db", async () => {
+    let res1 = await Reserve.addData(mockReserves);
+    let res2 = await Reserve.addData(mockReservesUpdated);
+    expect(res2.modifiedCount + res2.upsertedCount).to.equal(
+      mockReservesUpdated.length
+    );
   });
 
-  // it("should handle adding invalid RESERVES (returns ids=[] and doesn't add to db)", async () => {
-  //   let ids = await Reserve.addDataAndGetIds(mockInvalidReserves as any[]);
-  //   expect(ids).to.be.empty;
-  //   expect(await Reserve.countDocuments()).to.equal(0);
-  // });
+  it("should handle adding invalid RESERVES (returns nChanged=0 and doesn't add to db)", async () => {
+    let res = await Reserve.addData(mockInvalidReserves as any[]);
+    expect(res.upsertedIds.concat(res.modifiedIds)).to.be.empty;
+    expect(res.invalidCount).to.equal(mockInvalidReserves.length);
+    expect(await Reserve.countDocuments()).to.equal(0);
+  });
 
-  // it("should handle adding invalid RESERVES (returns nChanged=0 and doesn't add to db)", async () => {
-  //   let nChanged = await Reserve.addData(mockInvalidReserves as any[]);
-  //   expect(nChanged).to.equal(0);
-  //   expect(await Reserve.countDocuments()).to.equal(0);
-  // });
-
-  // it("should find reserves by client, network", async () => {
-  //   let reserves: IReserve[] = await Reserve.findByClientNetwork(
-  //     mockReserves[0].client,
-  //     mockReserves[0].network
-  //   );
-  //   expect(reserves.length).to.be.lessThan(mockReserves.length);
-  // });
+  it("should find reserves by client, network", async () => {
+    let reserves: IReserve[] = await Reserve.findByClientNetwork(
+      mockReserves[0].client,
+      mockReserves[0].network
+    );
+    expect(reserves.length).to.be.lessThan(mockReserves.length);
+  });
 });

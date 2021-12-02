@@ -5,6 +5,7 @@ import chaiAsPromised from "chai-as-promised";
 import {
   mongodb_test_uri,
   mockAccounts,
+  mockAccountsUpdated,
   mockInvalidAccounts,
   mockInvalidTokens,
 } from "../mockData";
@@ -31,62 +32,40 @@ describe("Collection: accounts", () => {
     await mongoose.connection.close();
   });
 
-  it("should upsert ACCOUNTS and return nChanged", async () => {
-    let nChanged = await Account.addData(mockAccounts);
-    expect(nChanged).to.equal(mockAccounts.length);
+  it("should upsert ACCOUNTS", async () => {
+    let res = await Account.addData(mockAccounts);
+    expect(res.upsertedCount).to.equal(mockAccounts.length);
   });
 
-  it("should upsert ACCOUNTS and return ids", async () => {
-    let ids = await Account.addDataAndGetIds(mockAccounts);
-    expect(ids.length).to.equal(mockAccounts.length);
+  it("should upsert ACCOUNTS already in db", async () => {
+    let res1 = await Account.addData(mockAccounts);
+    let res2 = await Account.addData(mockAccountsUpdated);
+    expect(res2.modifiedCount + res2.upsertedCount).to.equal(
+      mockAccountsUpdated.length
+    );
   });
 
-  it("should throw db validation error on invalid ACCOUNTS", async () => {
-    mockInvalidAccounts.forEach((account) => {
-      let filter = {
-        address: account.address,
-        client: account.client,
-        network: account.network,
-      };
-      let options = {
-        upsert: true,
-        runValidators: true,
-      };
-      expect(
-        Account.updateOne(filter as any, account as IAccount, options)
-      ).to.eventually.rejectedWith("ValidationError");
-    });
-    expect(await Account.countDocuments()).to.equal(0);
-  });
-
-  it("should throw db validation error on invalid ACCOUNTS", async () => {
-    mockInvalidAccounts.forEach((account) => {
-      let filter = {
-        address: account.address,
-        client: account.client,
-        network: account.network,
-      };
-      let options = {
-        upsert: true,
-        runValidators: true,
-        new: true,
-      };
-      expect(
-        Account.findOneAndUpdate(filter as any, account as IAccount, options)
-      ).to.eventually.rejectedWith("ValidationError");
-    });
-    expect(await Account.countDocuments()).to.equal(0);
-  });
-
-  it("should handle adding invalid accounts (returns ids=[] and doesn't add to db)", async () => {
-    let ids = await Account.addDataAndGetIds(mockInvalidAccounts as any[]);
-    expect(ids).to.be.empty;
-    expect(await Account.countDocuments()).to.equal(0);
-  });
+  // it("should throw db validation error on invalid ACCOUNTS", async () => {
+  //   mockInvalidAccounts.forEach(async (account) => {
+  //     let filter = {
+  //       address: account.address,
+  //       client: account.client,
+  //       network: account.network,
+  //     };
+  //     let options = {
+  //       upsert: true,
+  //       runValidators: true,
+  //     };
+  //     expect(await Account.countDocuments()).to.equal(0);
+  //     return expect(
+  //       Account.updateOne(filter as any, account as IAccount, options)
+  //     ).to.eventually.rejectedWith("ValidationError");
+  //   });
+  // });
 
   it("should handle adding invalid accounts (returns nChanged=0 and doesn't add to db)", async () => {
-    let nChanged = await Account.addData(mockInvalidAccounts as any[]);
-    expect(nChanged).to.equal(0);
+    let res = await Account.addData(mockInvalidAccounts as any[]);
+    expect(res.invalidCount).to.equal(mockInvalidAccounts.length);
     expect(await Account.countDocuments()).to.equal(0);
   });
 });

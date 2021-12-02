@@ -1,8 +1,14 @@
 // import eventSocket, { EventSocket } from "../helpers/socket-helpers";
 import { delay } from "../helpers/delay";
-import { IConfig, updateDatabase } from "../models";
+import { IConfig } from "../models";
+import { updateDatabase } from "../helpers/db-helpers";
 import Logger from "./logger";
-import { ClientFunction, ClientFunctionResult, ClientNames } from "./types";
+import {
+  ClientFunction,
+  ClientFunctionResult,
+  ClientNames,
+  UpdateResult,
+} from "./types";
 export default abstract class Client {
   public conf: IConfig;
   public pollCounters: {};
@@ -77,7 +83,14 @@ export default abstract class Client {
     clientFunctionSig: ClientFunction
   ): Promise<any[]> => {
     let functionResult: ClientFunctionResult | 0 = 0;
-    let databaseResult = 0;
+    let databaseResult: UpdateResult = {
+      upsertedCount: 0,
+      modifiedCount: 0,
+      matchedCount: 0,
+      invalidCount: 0,
+      upsertedIds: [],
+      modifiedIds: [],
+    };
     try {
       Logger.info({
         at: `${this.conf.client}#_execute(${clientFunctionSig.name})`,

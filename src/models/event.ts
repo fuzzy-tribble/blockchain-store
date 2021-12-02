@@ -1,13 +1,11 @@
-import {
-  Document,
-  InsertManyOptions,
-  InsertManyResult,
-  model,
-  Model,
-  Schema,
-} from "mongoose";
+import { Document, InsertManyOptions, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
-import { NetworkNames, ClientNames, EventNames } from "../lib/types";
+import {
+  NetworkNames,
+  ClientNames,
+  EventNames,
+  UpdateResult,
+} from "../lib/types";
 export interface IEvent {
   name: EventNames;
   client: ClientNames;
@@ -27,7 +25,7 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface IEventModel extends Model<IEventDoc> {
-  addData(events: IEvent[]): Promise<number>;
+  addData(events: IEvent[]): Promise<UpdateResult>;
   findLiquidationEvents(): Promise<IEventDoc[]>;
   propertyNames: typeof PropertyNames;
 }
@@ -50,8 +48,16 @@ const EventSchema = new Schema(EventSchemaFields, schemaOpts);
 
 EventSchema.statics.addData = async function (
   events: IEvent[]
-): Promise<number> {
-  let nInserted: number = 0;
+): Promise<UpdateResult> {
+  let updateRes: UpdateResult = {
+    upsertedCount: 0,
+    insertedCount: 0,
+    modifiedCount: 0,
+    matchedCount: 0,
+    invalidCount: 0,
+    upsertedIds: [],
+    modifiedIds: [],
+  };
   let options: InsertManyOptions = {
     ordered: false, // report any errors at the end
     rawResult: true,
@@ -59,12 +65,13 @@ EventSchema.statics.addData = async function (
   try {
     // TODO - insertMany should return type InsertManyResult with rawResult:true but doesn't
     let res: any = await Event.insertMany(events, options);
-    nInserted = res.insertedCount | 0;
+    updateRes.insertedCount = res.insertedCount;
     Logger.info({
       at: "Database#postUpdateEvent",
-      message: `Events inserted: ${nInserted}`,
+      message: `Events inserted: ${updateRes.insertedCount}`,
     });
     res.mongoose.validationErrors?.forEach((err) => {
+      updateRes.invalidCount = updateRes.invalidCount + 1;
       Logger.error({
         at: "Database#addData",
         message: `Error updating event.`,
@@ -78,7 +85,7 @@ EventSchema.statics.addData = async function (
       error: err,
     });
   } finally {
-    return nInserted;
+    return updateRes;
   }
 };
 

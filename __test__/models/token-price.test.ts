@@ -5,6 +5,7 @@ import { ITokenPrice, TokenPrice } from "../../src/models/token-price";
 import {
   mockTokens,
   mockTokenPrices,
+  mockTokenPricesUpdated,
   mockInvalidTokenPrices,
   mongodb_test_uri,
 } from "../mockData";
@@ -20,24 +21,37 @@ describe("Collection: token-prices", () => {
   });
 
   beforeEach(async () => {
+    // await mongoose.connection.dropDatabase();
+    // await mongoose.connect(mongodb_test_uri);
     await TokenPrice.collection.deleteMany({});
     await Token.collection.deleteMany({});
-    let nDocs = await TokenPrice.countDocuments();
-    expect(nDocs).to.equal(0);
+    // let nDocs = await TokenPrice.countDocuments();
+    // expect(nDocs).to.equal(0);
   });
 
   after(async () => {
     await mongoose.connection.close();
   });
 
-  it("should upsert TOKEN-PRICES and return nChanged", async () => {
-    let nChanged = await TokenPrice.addData(mockTokenPrices);
-    expect(nChanged).to.equal(mockTokenPrices.length);
+  it("should upsert TOKEN-PRICES", async () => {
+    let res = await TokenPrice.addData(mockTokenPrices);
+    expect(res.modifiedCount + res.upsertedCount).to.equal(
+      mockTokenPrices.length
+    );
+  });
+
+  it("should upsert TOKEN-PRICES already in db", async () => {
+    let res1 = await TokenPrice.addData(mockTokenPrices);
+    let res2 = await TokenPrice.addData(mockTokenPricesUpdated);
+    expect(res2.modifiedCount + res2.upsertedCount).to.equal(
+      mockTokenPrices.length
+    );
+    expect(res1.upsertedIds).to.have.all.members(res2.modifiedIds);
   });
 
   it("should handle adding invalid TOKEN-PRICES (returns nChanged=0 and doesn't add to db)", async () => {
-    let nChanged = await TokenPrice.addData(mockInvalidTokenPrices as any[]);
-    expect(nChanged).to.equal(0);
+    let res = await TokenPrice.addData(mockInvalidTokenPrices as any[]);
+    expect(res.modifiedCount + res.upsertedCount).to.equal(0);
     expect(await TokenPrice.countDocuments()).to.equal(0);
   });
 
@@ -71,7 +85,7 @@ describe("Collection: token-prices", () => {
     expect(latestTokenPrice?.priceInEth).to.equal(999);
   });
 
-  // it("should findLatestPercentChangeData", async () => {
-  //   // TODO - {percentChange1h, } = findLatestPercentChangeData
-  // });
+  it("should getTokenPricesAcrossClients", async () => {
+    // TODO
+  });
 });

@@ -5,6 +5,7 @@ import { loadClients } from "./clients";
 
 async function start() {
   await mongoose.connect(process.env.MONGODB_URL);
+  // mongoose.connection.readyState == 1
   // await eventSocket.ready();
 
   const clients = await loadClients();

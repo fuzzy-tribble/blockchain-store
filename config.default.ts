@@ -4,33 +4,67 @@ import { IConfig } from "./src/models/config";
 import { gql } from "@apollo/client/core";
 import { ClientNames, EventNames, NetworkNames } from "./src/lib/types";
 
-const coingeckoConfigs: IConfig = {
-  client: ,
-  network: ,
-  pollFunctions: [],
+const dydxConfigs: IConfig = {
+  client: ClientNames.DYDX,
+  network: NetworkNames.MAINNET,
+  pollFunctions: [
+    {
+      name: "getNewReserves",
+      frequency: 24 * 60 * 60 * 1000, // every 24 hours
+    },
+  ],
   listenerNames: [],
   dataSources: {
     blockchain: {
       rpcUrl: undefined,
-      lastBlockChecked: undefined
+      lastBlockChecked: undefined,
+    },
+    apis: {
+      baseUrl: "https://api.dydx.exchange",
+      allMarkets: "https://api.dydx.exchange/v3/markets",
+      // // // Ropsten
+      // baseUrl: "https://api.stage.dydx.exchange",
+    },
+    graphql: {
+      endpoint: undefined,
+      queries: undefined,
+    },
+  },
+};
+
+const coingeckoConfigs: IConfig = {
+  client: ClientNames.COINGECKO,
+  network: NetworkNames.MAINNET,
+  pollFunctions: [
+    {
+      name: "updateTokens",
+      frequency: 24 * 60 * 60 * 1000, // every 24 hours
+    },
+    {
+      name: "updateTokenData",
+      frequency: 1 * 60 * 60 * 1000, // every 1 hours
+    },
+  ],
+  listenerNames: [],
+  dataSources: {
+    blockchain: {
+      rpcUrl: undefined,
+      lastBlockChecked: undefined,
     },
     apis: {
       // Free API* has a rate limit of 50 calls/minute
       baseUrl: "https://api.coingecko.com/api/v3/",
-      allCoinsAndMarketsData: "https://api.coingecko.com/api/v3/coins/markets?vs_currency=eth&order=market_cap_desc&per_page=100&page=1&sparkline=true&price_change_percentage=1h%2C24h%2C7d%2C14d%2C30d%2C200d%2C1y",
-      exchangesListUrl: "https://api.coingecko.com/api/v3/coins/markets?vs_currency=eth&order=market_cap_desc&per_page=100&page=1&sparkline=true&price_change_percentage=1h%2C24h%2C7d%2C14d%2C30d%2C200d%2C1y",
-      allExchanges: "https://api.coingecko.com/api/v3/exchanges/list",
-      allBlockchainNetworks: "https://api.coingecko.com/api/v3/asset_platforms",
-      financeProducts: "https://api.coingecko.com/api/v3/finance_products",
-      financePlatorms: "https://api.coingecko.com/api/v3/finance_platforms",
-      trendingSearches: "https://api.coingecko.com/api/v3/search/trending",
+      allCoinsList:
+        "https://api.coingecko.com/api/v3/coins/list?include_platform=true",
+      coinsMarketData:
+        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=eth&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d",
     },
     graphql: {
       endpoint: undefined,
-      queries: undefined
-    }
-  }
-}
+      queries: undefined,
+    },
+  },
+};
 
 const chainlinkMainnetConfigs: IConfig = {
   client: ClientNames.CHAINLINK,
@@ -1013,7 +1047,9 @@ const sushiswapMainnet: IConfig = {
 };
 
 export const clientConfigs = [
-  aaveMainnetConfigs,
-  aaveKovanConfigs,
-  sushiswapMainnet,
+  dydxConfigs,
+  coingeckoConfigs,
+  // aaveMainnetConfigs,
+  // aaveKovanConfigs,
+  // sushiswapMainnet,
 ];

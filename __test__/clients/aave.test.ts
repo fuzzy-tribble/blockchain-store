@@ -5,7 +5,7 @@ import { ClientNames, NetworkNames } from "../../src/lib/types";
 import { IConfig, Config } from "../../src/models";
 import { mockReserves, mongodb_test_uri } from "../mockData";
 
-describe("aave-client", () => {
+describe("Client: aave", () => {
   let aave: Aave;
   let conf: IConfig | null;
 
@@ -26,16 +26,20 @@ describe("aave-client", () => {
     mongoose.connection.close();
   });
 
-  it("should get reserves", async () => {
-    let reserves = await aave.getReserves();
-    console.log(reserves[0]);
-    expect(reserves.length).to.be.greaterThan(1);
-  });
-  it("should update reserves data", async () => {
-    // let res = await aave.updateReserves();
-    // console.log(res);
+  // TEST FETCH
+  it("should get liquidatable accounts from API", async () => {
+    // https://protocol-api.aave.com/liquidations?get=proto
   });
 
-  it("should get accounts", async () => {});
-  it("should update accounts data", async () => {});
+  // TEST PARSE
+
+  // it("should get reserves", async () => {
+  // });
+  // it("should update reserves data", async () => {
+  //   // let res = await aave.updateReserves();
+  //   // console.log(res);
+  // });
+
+  // it("should get accounts", async () => {});
+  // it("should update accounts data", async () => {});
 });

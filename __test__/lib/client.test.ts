@@ -1,8 +1,12 @@
 import { expect } from "chai";
 import mongoose from "mongoose";
-import { mongodb_test_uri, MockClient } from "./mockData";
-import Client from "../src/lib/client";
-import { delay } from "../src/helpers/delay";
+import { mongodb_test_uri, MockClient } from "../mockData";
+import Client from "../../src/lib/client";
+import { delay } from "../../src/helpers/delay";
+import Logger from "../../src/lib/logger";
+
+// Silence logs while running tests
+Logger.transports.forEach((t) => (t.silent = true));
 
 describe("client", () => {
   let testClient: Client;

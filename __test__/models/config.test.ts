@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { expect } from "chai";
-import { Config, IConfig } from "../../src/models";
+import { Config, IConfig } from "../../src/models/config";
 import { mockClientConfigs, mongodb_test_uri } from "../mockData";
 
 describe("configs-db", () => {

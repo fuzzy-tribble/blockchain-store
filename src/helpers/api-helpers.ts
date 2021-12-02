@@ -5,20 +5,31 @@ export const apiRequest = async (
   clientName: string,
   networkRequest: AxiosRequestConfig
 ): Promise<any> => {
+  let result = null;
   try {
     Logger.info({
       client: clientName,
       at: "Api#request",
-      message: `Requesting data from network: ${networkRequest.url}`,
+      message: `Making network request: ${networkRequest.url}`,
     });
-    const res = await axios(networkRequest);
-    return res.data;
+    const { data, status, statusText, headers, config } = await axios(
+      networkRequest
+    );
+    if (status == 200) {
+      result = data;
+    } else {
+      throw new Error(
+        `ApiRequestError: status: ${status}, statusText: ${statusText}, headers: ${headers}`
+      );
+    }
   } catch (err) {
     Logger.error({
       client: clientName,
       at: "Api#request",
-      message: "Couldn't get latest block.",
+      message: "Couldn't fetch api data.",
       error: err,
     });
+  } finally {
+    return result;
   }
 };

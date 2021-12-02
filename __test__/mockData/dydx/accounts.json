@@ -1,0 +1,86 @@
+{
+  "accounts": [
+    {
+      "owner": "0x6f2aabdf2dab927e06f0b3480fe0d414a9416964",
+      "number": "0",
+      "uuid": "74875e03-a2f4-4f42-a813-6650666e7154",
+      "balances": {
+        "0": {
+          "marketId": 0,
+          "par": "-28286128576625",
+          "wei": "-28848538302495",
+          "expiresAt": null,
+          "expiryAddress": null
+        },
+        "1": {
+          "marketId": 1,
+          "par": "0",
+          "wei": "0",
+          "pendingWei": "0",
+          "expiresAt": null,
+          "orderNumber": null,
+          "expiryAddress": null,
+          "expiryOrderNumber": null,
+          "isPendingBlock": false
+        },
+        "2": {
+          "marketId": 2,
+          "par": "76453",
+          "wei": "86029",
+          "expiresAt": null,
+          "expiryAddress": null
+        },
+        "3": {
+          "marketId": 3,
+          "par": "54115103244350073",
+          "wei": "61019861170450336",
+          "expiresAt": null,
+          "expiryAddress": null
+        }
+      }
+    },
+    {
+      "owner": "0x830610327a7b6748675967a8e1af1094518db568",
+      "number": "0",
+      "uuid": "976f320b-53d6-4a37-9cbe-8c3041608b0c",
+      "balances": {
+        "0": {
+          "marketId": 0,
+          "par": "-19771909582912591",
+          "wei": "-20165032106496135",
+          "expiresAt": null,
+          "expiryAddress": null
+        },
+        "1": {
+          "marketId": 1,
+          "par": "0",
+          "wei": "0",
+          "pendingWei": "0",
+          "expiresAt": null,
+          "orderNumber": null,
+          "expiryAddress": null,
+          "expiryOrderNumber": null,
+          "isPendingBlock": false
+        },
+        "2": {
+          "marketId": 2,
+          "par": "91453735",
+          "wei": "102909472",
+          "expiresAt": null,
+          "expiryAddress": null
+        },
+        "3": {
+          "marketId": 3,
+          "par": "0",
+          "wei": "0",
+          "pendingWei": "0",
+          "expiresAt": null,
+          "orderNumber": null,
+          "expiryAddress": null,
+          "expiryOrderNumber": null,
+          "isPendingBlock": false
+        }
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import { gql } from "@apollo/client/core";
 import { expect } from "chai";
-import GqlClient from "../src/helpers/graphql-helpers";
+import GqlClient from "../../src/helpers/graphql-helpers";
 
 const mockQuery = gql`
   query GetReserveData {

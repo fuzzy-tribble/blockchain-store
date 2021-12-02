@@ -1,0 +1,21 @@
+services:
+  # # Blockchain store app (build from dockerfile)
+  # blockchain-store:
+  #   build: .
+  #   links:
+  # - mongo
+
+  # Mongodb database
+  database:
+    image: "mongo"
+    container_name: "mongo_container"
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_DATABASE: "test"
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME:?err}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:?err}
+    ports:
+      # map localPort:containerPort
+      - "27017:27017"
+    volumes:
+      - ./mongo-volume:/data/db

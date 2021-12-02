@@ -1,21 +1,19 @@
+import { FilterQuery, Document, model, Model, Schema, Query } from "mongoose";
 import {
-  FilterQuery,
-  QueryOptions,
-  Document,
-  model,
-  Model,
-  Schema,
-} from "mongoose";
-import { validateRequiredFields, defaultSchemaOpts } from ".";
+  defaultSchemaOpts,
+  updateValidation,
+  defaultQueryOptions,
+} from "../helpers/db-helpers";
 import Logger from "../lib/logger";
-import { ClientNames, NetworkNames } from "../lib/types";
-import { IToken, ITokenDoc, Token } from "./token";
+import { ClientNames, NetworkNames, UpdateResult } from "../lib/types";
+import { IToken, Token, ITokenDoc } from "./token";
 export interface IReserve {
   client: ClientNames;
-  network: NetworkNames;
+  network: string;
   address: string;
-  tokens: Array<number | IToken>;
+  tokens: string[] | FilterQuery<ITokenDoc>[];
   liquidationThreshold?: number;
+  [x: string]: any;
 }
 
 // DOCUMENT DEFS //
@@ -29,11 +27,10 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface IReserveModel extends Model<IReserveDoc> {
-  addData(reserves: IReserve[]): Promise<number>;
-  addDataAndGetIds(reserves: IReserve[]): Promise<Array<number>>;
+  addData(reserves: IReserve[]): Promise<UpdateResult>;
   findByClientNetwork(
     client: ClientNames,
-    network: NetworkNames
+    network: string
   ): Promise<IReserve[]>;
   propertyNames: typeof PropertyNames;
 }
@@ -51,7 +48,7 @@ const ReserveSchemaFields: Record<keyof IReserve, any> = {
   },
   network: {
     type: String,
-    enum: NetworkNames,
+    // enum: NetworkNames,
     required: true,
   },
   tokens: [{ type: Schema.Types.ObjectId, ref: "tokens" }],
@@ -61,13 +58,7 @@ const ReserveSchemaFields: Record<keyof IReserve, any> = {
 const ReserveSchema = new Schema(ReserveSchemaFields, defaultSchemaOpts);
 ReserveSchema.index({ client: 1, network: 1, address: 1 }, { unique: true });
 
-ReserveSchema.pre(["findOneAndUpdate", "updateOne"], function () {
-  validateRequiredFields(this.getUpdate() as IReserve, [
-    "client",
-    "network",
-    "address",
-  ]);
-});
+ReserveSchema.pre(["updateOne"], updateValidation);
 
 ReserveSchema.post(["findOneAndUpdate"], function (res) {
   Logger.info({
@@ -78,7 +69,7 @@ ReserveSchema.post(["findOneAndUpdate"], function (res) {
 
 ReserveSchema.statics.findByClientNetwork = async function (
   client: ClientNames | null = null,
-  network: NetworkNames | null = null
+  network: string | null = null
 ): Promise<IReserve[]> {
   let reserves: IReserve[] = [];
   try {
@@ -107,22 +98,31 @@ ReserveSchema.statics.findByClientNetwork = async function (
 
 ReserveSchema.statics.addData = async function (
   reserves: IReserve[]
-): Promise<number> {
-  let nChanged: number = 0;
-  let options: QueryOptions = {
-    // returnDocument: "after",
-    upsert: true,
-    runValidators: true,
-    new: true, // otherwise will fail on empty collection
+): Promise<UpdateResult> {
+  let updateRes: UpdateResult = {
+    upsertedCount: 0,
+    modifiedCount: 0,
+    matchedCount: 0,
+    invalidCount: 0,
+    upsertedIds: [],
+    modifiedIds: [],
   };
-  let summaryRes = {
-    nUpserted: 0,
-    nModified: 0,
-  };
-  try {
-    await Promise.all(
-      reserves.map(async (reserve) => {
-        let tokenIds = await Token.addDataAndGetIds(reserve.tokens as IToken[]);
+  await Promise.all(
+    reserves.map(async (reserve) => {
+      try {
+        let tokenIds: string[] = [];
+        let tokenFilters: Array<object> = [];
+        reserve.tokens.forEach((token) => {
+          typeof token === "string"
+            ? tokenIds.push(token)
+            : tokenFilters.push(token);
+        });
+
+        if (tokenFilters.length > 0) {
+          let res = await Token.addData(tokenFilters as IToken[]);
+          tokenIds.push(...res.upsertedIds);
+          tokenIds.push(...res.modifiedIds);
+        }
         if (tokenIds.length == reserve.tokens.length) {
           reserve["tokens"] = tokenIds;
           let filter: FilterQuery<IReserveDoc> = {
@@ -130,69 +130,45 @@ ReserveSchema.statics.addData = async function (
             client: reserve.client,
             address: reserve.address,
           };
-          let oneUpdatedRes = await Reserve.updateOne(filter, reserve, options);
-          summaryRes.nUpserted =
-            summaryRes.nUpserted + oneUpdatedRes.upsertedCount;
-          summaryRes.nUpserted =
-            summaryRes.nUpserted + oneUpdatedRes.modifiedCount;
-        }
-      })
-    );
-    Logger.info({
-      at: "Database#postUpdateReserves",
-      message: `Reserves updated (nUpserted: ${summaryRes.nUpserted}, nModified: ${summaryRes.nModified})`,
-    });
-    nChanged = summaryRes.nUpserted + summaryRes.nModified;
-  } catch (err) {
-    Logger.error({
-      at: "Database#addData",
-      message: `Error updating reserves.`,
-      error: err,
-    });
-  } finally {
-    return nChanged;
-  }
-};
-
-ReserveSchema.statics.addDataAndGetIds = async function (
-  reserves: IReserve[]
-): Promise<Array<number>> {
-  let returnResult: Array<number> = [];
-  let options: QueryOptions = {
-    // returnDocument: "after",
-    upsert: true,
-    runValidators: true,
-    new: true, // otherwise will fail on empty collection
-  };
-  try {
-    returnResult = await Promise.all(
-      reserves.map(async (reserve) => {
-        let tokenIds = await Token.addDataAndGetIds(reserve.tokens as IToken[]);
-        if (tokenIds.length == reserve.tokens.length) {
-          reserve["tokens"] = tokenIds as number[];
-          let filter: FilterQuery<IReserveDoc> = {
-            network: reserve.network,
-            client: reserve.client,
-            address: reserve.address,
-          };
-          let reserveDoc = await Reserve.findOneAndUpdate(
+          let res = await Reserve.updateOne(
             filter,
             reserve,
-            options
+            defaultQueryOptions
           );
-          return reserveDoc?.id;
+          updateRes.upsertedCount = updateRes.upsertedCount + res.upsertedCount;
+          updateRes.modifiedCount = updateRes.modifiedCount + res.modifiedCount;
+          updateRes.matchedCount = updateRes.matchedCount + res.matchedCount;
+          if (res.matchedCount > 0) {
+            let doc = await Reserve.findOne(filter).exec();
+            doc ? updateRes.modifiedIds.push(doc.id) : "";
+          }
+          res.upsertedId
+            ? updateRes.upsertedIds.push(res.upsertedId.toString())
+            : "";
+        } else {
+          updateRes.invalidCount = updateRes.invalidCount + 1;
+          Logger.error({
+            at: "Database#addData",
+            message: `Not all tokenIds updated successfully for reserve: ${reserve}`,
+          });
         }
-      })
-    );
-  } catch (err) {
-    Logger.error({
-      at: "Database#addData",
-      message: `Error updating reserves.`,
-      error: err,
-    });
-  } finally {
-    return returnResult;
-  }
+      } catch (err) {
+        updateRes.invalidCount = updateRes.invalidCount + 1;
+        Logger.error({
+          at: "Database#addData",
+          message: `Error updating reserves.`,
+          error: err,
+        });
+      }
+    })
+  );
+  Logger.info({
+    at: "Database#postUpdateReserves",
+    message: `Reserves updated (nUpserted: ${updateRes.upsertedCount}, nModified: ${updateRes.modifiedCount}, nInvalid: ${updateRes.invalidCount})`,
+    details: updateRes,
+  });
+
+  return updateRes;
 };
 
 // ReserveSchema.statics.findMostInteresting = async function () {};

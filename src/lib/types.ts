@@ -1,5 +1,4 @@
 import { EventFilter } from "ethers";
-import { CollectionNames } from "../models";
 
 // ============ Types ============
 
@@ -21,6 +20,18 @@ export enum EventNames {
   PENDING_ARBITRAGE = "pending-arbitrage",
   MAJOR_TOKEN_PRICE_CHANGE = "major-token-price-change",
   LIQUIDATABLE_ACCOUNT = "liquidatable-account",
+}
+
+// TODO - auto do this using mongo connection.collections perhaps...
+export enum CollectionNames {
+  CONFIGS = "configs",
+  EVENTS = "events",
+  ACCOUNTS = "accounts",
+  ACCOUNT_RESERVES = "account-reserves",
+  RESERVES = "reserves",
+  TOKENS = "tokens",
+  TOKEN_PRICES = "token-prices",
+  TEST = "test",
 }
 
 export enum NetworkNames {
@@ -64,6 +75,16 @@ export interface ClientFunctionResult {
   network: NetworkNames;
   collection: CollectionNames;
   data: any;
+}
+
+export interface UpdateResult {
+  upsertedCount: number;
+  insertedCount?: number;
+  modifiedCount: number;
+  matchedCount: number;
+  invalidCount: number;
+  upsertedIds: string[];
+  modifiedIds: string[];
 }
 // ==================================
 

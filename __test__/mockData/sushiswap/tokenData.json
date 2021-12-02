@@ -1,0 +1,33 @@
+[
+  {
+    "action": "all_tokens",
+    "chain": "Ethereum",
+    "number_of_results": 1721
+  },
+  [
+    {
+      "Contract": "0x0000000000004946c0e9f43f4dee607b0ef1fa1c",
+      "Symbol": "CHI",
+      "Name": "Chi Gastoken by 1inch",
+      "Decimals": 0
+    },
+    {
+      "Contract": "0x0000000000085d4780b73119b644ae5ecd22b376",
+      "Symbol": "TUSD",
+      "Name": "TrueUSD",
+      "Decimals": 18
+    },
+    {
+      "Contract": "0x0000000000095413afc295d19edeb1ad7b71c952",
+      "Symbol": "LON",
+      "Name": "Tokenlon",
+      "Decimals": 18
+    },
+    {
+      "Contract": "0x0000a1c00009a619684135b824ba02f7fbf3a572",
+      "Symbol": "ALCH",
+      "Name": "Alchemy",
+      "Decimals": 18
+    }
+  ]
+]
