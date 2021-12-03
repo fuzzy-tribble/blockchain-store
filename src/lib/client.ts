@@ -7,6 +7,7 @@ import {
   ClientFunction,
   ClientFunctionResult,
   ClientNames,
+  CollectionNames,
   UpdateResult,
 } from "./types";
 export default abstract class Client {
@@ -82,11 +83,16 @@ export default abstract class Client {
   private _executeFunctionByName = async (
     clientFunctionSig: ClientFunction
   ): Promise<any[]> => {
-    let functionResult: ClientFunctionResult | 0 = 0;
+    let functionResult: ClientFunctionResult = {
+      success: false,
+      client: this.conf.client,
+      network: this.conf.network,
+      collection: CollectionNames.TEST,
+      data: undefined,
+    };
     let databaseResult: UpdateResult = {
       upsertedCount: 0,
       modifiedCount: 0,
-      matchedCount: 0,
       invalidCount: 0,
       upsertedIds: [],
       modifiedIds: [],
@@ -100,7 +106,7 @@ export default abstract class Client {
       functionResult = await this[clientFunctionSig.name].call(
         clientFunctionSig.args
       );
-      if (functionResult) {
+      if (functionResult.success) {
         databaseResult = await updateDatabase(functionResult);
       }
       Logger.info({
@@ -116,6 +122,12 @@ export default abstract class Client {
         pollCount: this.pollCounters[clientFunctionSig.name],
       });
     } finally {
+      Logger.debug({
+        at: `${this.conf.client}#_execute(${clientFunctionSig.name})`,
+        message: `Execution result.`,
+        clientFunctionResult: `Client function execution success = ${functionResult.success}`,
+        databaseUpdateResult: `Database update: nUpserted: ${databaseResult.upsertedCount}, nModified: ${databaseResult.modifiedCount}, nInvalid: ${databaseResult.invalidCount}`,
+      });
       return [functionResult, databaseResult];
     }
   };

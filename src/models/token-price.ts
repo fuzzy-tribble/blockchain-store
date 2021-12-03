@@ -9,7 +9,7 @@ import {
 import Logger from "../lib/logger";
 
 export interface ITokenPrice {
-  token: string | FilterQuery<ITokenDoc>;
+  token: FilterQuery<ITokenDoc>;
   priceInEth: string;
   source: ClientNames;
   lastUpdated: string;
@@ -54,12 +54,12 @@ TokenPriceSchema.pre(["updateOne"], function () {
   updateValidation(this.getUpdate(), TokenPriceSchema.obj);
 });
 
-TokenPriceSchema.post(["findOneAndUpdate"], function (res) {
-  Logger.info({
-    at: "Database#postUpdateTokenPrice",
-    message: `Token price updated: ${res.token}.${res.priceInEth} (${res.source})`,
-  });
-});
+// TokenPriceSchema.post(["findOneAndUpdate"], function (res) {
+//   Logger.info({
+//     at: "Database#postUpdateTokenPrice",
+//     message: `Token price updated: ${res.token}.${res.priceInEth} (${res.source})`,
+//   });
+// });
 
 TokenPriceSchema.statics.addData = async function (
   tokenPrices: ITokenPrice[]
@@ -67,7 +67,6 @@ TokenPriceSchema.statics.addData = async function (
   let updateRes: UpdateResult = {
     upsertedCount: 0,
     modifiedCount: 0,
-    matchedCount: 0,
     invalidCount: 0,
     upsertedIds: [],
     modifiedIds: [],
@@ -75,18 +74,14 @@ TokenPriceSchema.statics.addData = async function (
   await Promise.all(
     tokenPrices.map(async (tokenPrice) => {
       try {
-        let { upsertedIds, modifiedIds } = await Token.addData([
-          tokenPrice.token as IToken,
-        ]);
-        let tokenId = upsertedIds.concat(modifiedIds)[0];
-        if (tokenId) {
-          tokenPrice["token"] = tokenId;
+        let tokenDoc = await Token.findOne({ uid: tokenPrice.token.uid });
+        if (tokenDoc) {
+          tokenPrice["token"] = tokenDoc.id;
           let filter: FilterQuery<ITokenPriceDoc> = {
-            token: tokenId,
+            token: tokenPrice.token,
             lastUpdated: tokenPrice.lastUpdated,
             source: tokenPrice.source,
           };
-
           let doc = await TokenPrice.findOne(filter);
           let res = await TokenPrice.updateOne(
             filter,
@@ -95,17 +90,17 @@ TokenPriceSchema.statics.addData = async function (
           );
           updateRes.upsertedCount = updateRes.upsertedCount + res.upsertedCount;
           updateRes.modifiedCount = updateRes.modifiedCount + res.modifiedCount;
-          updateRes.matchedCount = updateRes.matchedCount + res.matchedCount;
           doc ? updateRes.modifiedIds.push(doc.id) : "";
           updateRes.upsertedIds.push(res.upsertedId.toString());
         } else {
-          updateRes.invalidCount = updateRes.invalidCount + 1;
+          throw new Error(`Token id not found for token price for token`);
         }
       } catch (err) {
         updateRes.invalidCount = updateRes.invalidCount + 1;
         Logger.error({
           at: "Database#addData",
-          message: `Error updating token prices.`,
+          message: `Error updating token price.`,
+          tokenPrice: tokenPrice.id,
           error: err,
         });
       }
@@ -113,7 +108,7 @@ TokenPriceSchema.statics.addData = async function (
   );
   Logger.info({
     at: "Database#postUpdateToken",
-    message: `Tokens updated (nUpserted: ${updateRes.upsertedCount}, nModified: ${updateRes.modifiedCount})`,
+    message: `Tokens updated (nUpserted: ${updateRes.upsertedCount}, nModified: ${updateRes.modifiedCount}, nInvalid: ${updateRes.invalidCount})`,
   });
   return updateRes;
 };

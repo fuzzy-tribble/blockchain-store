@@ -1047,7 +1047,7 @@ const sushiswapMainnet: IConfig = {
 };
 
 export const clientConfigs = [
-  dydxConfigs,
+  // dydxConfigs,
   coingeckoConfigs,
   // aaveMainnetConfigs,
   // aaveKovanConfigs,

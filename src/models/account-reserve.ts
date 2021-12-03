@@ -63,7 +63,6 @@ AccountReserveSchema.statics.addData = async function (
   let updateRes: UpdateResult = {
     upsertedCount: 0,
     modifiedCount: 0,
-    matchedCount: 0,
     invalidCount: 0,
     upsertedIds: [],
     modifiedIds: [],
@@ -99,11 +98,14 @@ AccountReserveSchema.statics.addData = async function (
           );
           updateRes.upsertedCount = updateRes.upsertedCount + res.upsertedCount;
           updateRes.modifiedCount = updateRes.modifiedCount + res.modifiedCount;
-          updateRes.matchedCount = updateRes.matchedCount + res.matchedCount;
           doc ? updateRes.modifiedIds.push(doc.id) : "";
           updateRes.upsertedIds.push(res.upsertedId.toString());
         } else {
           updateRes.invalidCount = updateRes.invalidCount + 1;
+          Logger.error({
+            at: "Database#addData",
+            message: `accountId and reserveId not found for: ${accountReserve}`,
+          });
         }
       } catch (err) {
         Logger.error({

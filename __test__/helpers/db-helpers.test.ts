@@ -73,7 +73,7 @@ describe("Helpers: db-helpers", () => {
 
     it("should updateDatabase (mockAccountData)", async () => {
       let functionResult: ClientFunctionResult = {
-        status: false,
+        success: false,
         client: ClientNames.AAVE,
         network: "mainnet",
         collection: CollectionNames.ACCOUNTS,
@@ -84,7 +84,7 @@ describe("Helpers: db-helpers", () => {
     });
     it("should updateDatabase (mockReserveData)", async () => {
       let functionResult: ClientFunctionResult = {
-        status: false,
+        success: false,
         client: ClientNames.AAVE,
         network: "mainnet",
         collection: CollectionNames.RESERVES,
@@ -95,7 +95,7 @@ describe("Helpers: db-helpers", () => {
     });
     it("should updateDatabase (mockEventData)", async () => {
       let functionResult: ClientFunctionResult = {
-        status: false,
+        success: false,
         client: ClientNames.AAVE,
         network: "mainnet",
         collection: CollectionNames.EVENTS,

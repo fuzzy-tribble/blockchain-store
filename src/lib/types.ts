@@ -71,7 +71,7 @@ export interface ClientFunction {
 }
 
 export interface ClientFunctionResult {
-  status: boolean;
+  success: boolean;
   client: ClientNames;
   network: string;
   collection: CollectionNames;
@@ -80,9 +80,7 @@ export interface ClientFunctionResult {
 
 export interface UpdateResult {
   upsertedCount: number;
-  insertedCount?: number;
   modifiedCount: number;
-  matchedCount: number;
   invalidCount: number;
   upsertedIds: string[];
   modifiedIds: string[];

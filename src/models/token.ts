@@ -32,6 +32,7 @@ export interface ITokenModel extends Model<ITokenDoc> {
 
 // SCHEMA DEFS //
 const TokenSchemaFields: Record<keyof IToken, any> = {
+  uid: { type: String, required: true },
   platforms: {
     type: Map,
     of: String,
@@ -39,8 +40,6 @@ const TokenSchemaFields: Record<keyof IToken, any> = {
   },
   decimals: { type: Number, required: false, default: null },
   symbol: { type: String, required: false },
-  uid: { type: String, required: true },
-  // volatilityRanking: { type: Number, default: 0 },
 };
 
 const TokenSchema = new Schema(TokenSchemaFields, defaultSchemaOpts);
@@ -50,12 +49,12 @@ TokenSchema.pre(["updateOne"], function () {
   updateValidation(this.getUpdate(), TokenSchema.obj);
 });
 
-TokenSchema.post(["findOneAndUpdate"], function (res) {
-  Logger.info({
-    at: "Database#postUpdateToken",
-    message: `Token updated: ${res.address}.${res.network}.`,
-  });
-});
+// TokenSchema.post(["findOneAndUpdate"], function (res) {
+//   Logger.info({
+//     at: "Database#postUpdateToken",
+//     message: `Token updated: ${res.address}.${res.network}.`,
+//   });
+// });
 
 TokenSchema.statics.addData = async function (
   tokens: IToken[]
@@ -63,7 +62,6 @@ TokenSchema.statics.addData = async function (
   let updateRes: UpdateResult = {
     upsertedCount: 0,
     modifiedCount: 0,
-    matchedCount: 0,
     invalidCount: 0,
     upsertedIds: [],
     modifiedIds: [],
@@ -78,10 +76,14 @@ TokenSchema.statics.addData = async function (
         let filter: FilterQuery<ITokenDoc> = {
           uid: token.uid,
         };
-        let res = await Token.updateOne(filter, token, defaultQueryOptions);
+
+        let res = await Token.updateOne(
+          filter,
+          token,
+          defaultQueryOptions
+        ).exec();
         updateRes.upsertedCount = updateRes.upsertedCount + res.upsertedCount;
         updateRes.modifiedCount = updateRes.modifiedCount + res.modifiedCount;
-        updateRes.matchedCount = updateRes.matchedCount + res.matchedCount;
         if (res.matchedCount > 0) {
           let doc = await Token.findOne(filter, "id uid").exec();
           doc ? updateRes.modifiedIds.push(doc.id) : "";
@@ -93,7 +95,7 @@ TokenSchema.statics.addData = async function (
         updateRes.invalidCount = updateRes.invalidCount + 1;
         Logger.error({
           at: "Database#addData",
-          message: `Error updating tokens.`,
+          message: `Error updating token: ${token.uid}`,
           error: err,
         });
       }
@@ -102,7 +104,6 @@ TokenSchema.statics.addData = async function (
   Logger.info({
     at: "Database#postUpdateToken",
     message: `Tokens updated (nUpserted: ${updateRes.upsertedCount}, nModified: ${updateRes.modifiedCount}, nInvalid: ${updateRes.invalidCount})`,
-    details: updateRes,
   });
   return updateRes;
 };

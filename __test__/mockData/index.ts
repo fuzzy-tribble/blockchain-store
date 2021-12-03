@@ -91,14 +91,10 @@ export const mockTokensUpdated: Array<IToken> = [
     decimals: 8,
   },
   {
-    platforms: {
-      ethereum: "0",
-      polygon: "03498209482",
-    },
-    symbol: "WETH",
     uid: "token-2",
-    decimals: 18,
-    moreStill: 100,
+    platforms: {
+      nantucknet: "023948209348",
+    },
   },
 ];
 
@@ -134,13 +130,13 @@ export const mockTokenPrices: Array<ITokenPrice> = [
 
 export const mockTokenPricesUpdated: Array<ITokenPrice> = [
   {
-    token: mockTokens[0],
+    token: { uid: mockTokens[0].uid },
     priceInEth: "999",
     source: ClientNames.COINGECKO,
     lastUpdated: Date.now().toString(),
   },
   {
-    token: mockTokens[1],
+    token: { uid: mockTokens[1].uid },
     priceInEth: "111",
     source: ClientNames.COINGECKO,
     lastUpdated: Date.now().toString(),
@@ -367,7 +363,7 @@ export class MockClient extends Client {
   }
   mockPollFunction1 = async (): Promise<ClientFunctionResult> => {
     return {
-      status: true,
+      success: true,
       client: this.conf.client,
       network: this.conf.network,
       collection: CollectionNames.TEST,

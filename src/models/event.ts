@@ -51,9 +51,7 @@ EventSchema.statics.addData = async function (
 ): Promise<UpdateResult> {
   let updateRes: UpdateResult = {
     upsertedCount: 0,
-    insertedCount: 0,
     modifiedCount: 0,
-    matchedCount: 0,
     invalidCount: 0,
     upsertedIds: [],
     modifiedIds: [],
@@ -65,10 +63,10 @@ EventSchema.statics.addData = async function (
   try {
     // TODO - insertMany should return type InsertManyResult with rawResult:true but doesn't
     let res: any = await Event.insertMany(events, options);
-    updateRes.insertedCount = res.insertedCount;
+    updateRes.upsertedCount = res.insertedCount;
     Logger.info({
       at: "Database#postUpdateEvent",
-      message: `Events inserted: ${updateRes.insertedCount}`,
+      message: `Events inserted: ${updateRes.upsertedCount}`,
     });
     res.mongoose.validationErrors?.forEach((err) => {
       updateRes.invalidCount = updateRes.invalidCount + 1;

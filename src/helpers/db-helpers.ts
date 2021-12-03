@@ -1,5 +1,16 @@
 import { Schema, Error, QueryOptions } from "mongoose";
-import { Account, IAccount, Reserve, IReserve, Event, IEvent } from "../models";
+import {
+  Account,
+  IAccount,
+  Reserve,
+  IReserve,
+  Event,
+  IEvent,
+  IToken,
+  Token,
+  TokenPrice,
+  AccountReserve,
+} from "../models";
 import {
   ClientFunctionResult,
   CollectionNames,
@@ -60,7 +71,8 @@ export const validateRequiredFields = (
   });
   if (invalidValues !== "") {
     throw new Error.ValidatorError({
-      message: `${invalidValues}`,
+      message: `Invalid fields found for update: ${JSON.stringify(update)}`,
+      value: `${invalidValues}`,
     });
   }
 };
@@ -90,8 +102,8 @@ export const validateMany = (
     } catch (err) {
       res.invalidCount = res.invalidCount + 1;
       Logger.error({
-        at: "Database#addData",
-        message: `Error updating reserves.`,
+        at: "_#validateMany",
+        message: `Validation failed for item: ${JSON.stringify(item)}`,
         error: err,
       });
     }
@@ -105,7 +117,6 @@ export const updateDatabase = async (
   let res: UpdateResult = {
     upsertedCount: 0,
     modifiedCount: 0,
-    matchedCount: 0,
     invalidCount: 0,
     upsertedIds: [],
     modifiedIds: [],
@@ -114,11 +125,20 @@ export const updateDatabase = async (
     case CollectionNames.ACCOUNTS:
       res = await Account.addData(fRes.data);
       break;
+    case CollectionNames.ACCOUNT_RESERVES:
+      res = await AccountReserve.addData(fRes.data);
+      break;
     case CollectionNames.RESERVES:
-      res = await Reserve.addData(fRes.data as IReserve[]);
+      res = await Reserve.addData(fRes.data);
       break;
     case CollectionNames.EVENTS:
-      res = await Event.addData(fRes.data as IEvent[]);
+      res = await Event.addData(fRes.data);
+      break;
+    case CollectionNames.TOKENS:
+      res = await Token.addData(fRes.data);
+      break;
+    case CollectionNames.TOKEN_PRICES:
+      res = await TokenPrice.addData(fRes.data);
       break;
     default:
       // TEST Collection or anything else

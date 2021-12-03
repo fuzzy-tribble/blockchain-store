@@ -70,11 +70,13 @@ export const parseCoinsAndPlatformsFromApi = (
         delete coin["platforms"][network];
       }
     });
-    tokens.push({
-      uid: coin.id,
-      coingeckoId: coin.id,
-      ...coin,
-    });
+    if (Object.keys(coin["platforms"]).length > 0) {
+      tokens.push({
+        uid: coin.id,
+        coingeckoId: coin.id,
+        ...coin,
+      });
+    }
   });
   return tokens;
 };

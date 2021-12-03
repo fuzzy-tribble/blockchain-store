@@ -104,7 +104,6 @@ ReserveSchema.statics.addData = async function (
   let updateRes: UpdateResult = {
     upsertedCount: 0,
     modifiedCount: 0,
-    matchedCount: 0,
     invalidCount: 0,
     upsertedIds: [],
     modifiedIds: [],
@@ -139,7 +138,6 @@ ReserveSchema.statics.addData = async function (
           );
           updateRes.upsertedCount = updateRes.upsertedCount + res.upsertedCount;
           updateRes.modifiedCount = updateRes.modifiedCount + res.modifiedCount;
-          updateRes.matchedCount = updateRes.matchedCount + res.matchedCount;
           if (res.matchedCount > 0) {
             let doc = await Reserve.findOne(filter).exec();
             doc ? updateRes.modifiedIds.push(doc.id) : "";

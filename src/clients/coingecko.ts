@@ -11,48 +11,56 @@ import {
   CoingeckoCoinPlatformData,
   CoinGeckoResponse,
   parseCoinMarketDataFromApi,
+  parseCoinsAndPlatformsFromApi,
 } from "./helpers/coingecko-helpers";
 
 export default class Coingecko extends Client {
   updateTokenData = async (): Promise<ClientFunctionResult> => {
-    const tokenPrices = await this._fetchCoinMarketDataFromApi();
-    return {
-      status: true,
+    let res: ClientFunctionResult = {
+      success: false,
       client: this.conf.client,
       network: this.conf.network,
       collection: CollectionNames.TOKEN_PRICES,
-      data: tokenPrices,
+      data: null,
     };
+    const tokenPrices = await this._fetchCoinMarketDataFromApi();
+    if (tokenPrices) {
+      res.success = true;
+      res.data = tokenPrices;
+    }
+    return res;
   };
 
   updateTokens = async (): Promise<ClientFunctionResult> => {
-    const tokens = await this._fetchCoinListFromApi();
-    return {
-      status: true,
+    let res: ClientFunctionResult = {
+      success: false,
       client: this.conf.client,
       network: this.conf.network,
       collection: CollectionNames.TOKENS,
-      data: tokens,
+      data: null,
     };
-  };
-
-  _fetchCoinListFromApi = async (): Promise<ITokenPrice[]> => {
-    let tokenPrices: ITokenPrice[] = [];
-    const { success, message, code, data }: CoinGeckoResponse =
-      await apiRequest(this.conf.client, {
-        method: "GET",
-        url: this.conf.dataSources.apis.allCoinsList,
-      });
-    if (success) {
-      tokenPrices = parseCoinMarketDataFromApi(
-        this.conf.client,
-        data as CoingeckoCoinMarketData[]
-      );
+    const tokens = await this._fetchCoinListFromApi();
+    if (tokens) {
+      res.success = true;
+      res.data = tokens;
     }
-    return tokenPrices;
+    return res;
   };
 
-  _fetchCoinMarketDataFromApi = async (): Promise<ITokenPrice[] | void> => {
+  _fetchCoinListFromApi = async (): Promise<IToken[] | null> => {
+    const data = await apiRequest(this.conf.client, {
+      method: "GET",
+      url: this.conf.dataSources.apis.allCoinsList,
+    });
+    if (data) {
+      const tokens = parseCoinsAndPlatformsFromApi(data);
+      return tokens;
+    } else {
+      return null;
+    }
+  };
+
+  _fetchCoinMarketDataFromApi = async (): Promise<ITokenPrice[] | null> => {
     const data: CoingeckoCoinMarketData[] = await apiRequest(
       ClientNames.COINGECKO,
       {
@@ -64,7 +72,7 @@ export default class Coingecko extends Client {
       const tokenPrices = parseCoinMarketDataFromApi(this.conf.client, data);
       return tokenPrices;
     } else {
-      throw new Error("IMPLEMENT ME");
+      return null;
     }
   };
 }

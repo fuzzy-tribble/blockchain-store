@@ -12,9 +12,15 @@ export const apiRequest = async (
       at: "Api#request",
       message: `Making network request: ${networkRequest.url}`,
     });
+    networkRequest.timeout = 5000; // wait 5 seconds before timing out
     const { data, status, statusText, headers, config } = await axios(
       networkRequest
     );
+    Logger.info({
+      client: clientName,
+      at: "Api#request",
+      message: `Api request done with status: ${status} (${statusText})`,
+    });
     if (status == 200) {
       result = data;
     } else {

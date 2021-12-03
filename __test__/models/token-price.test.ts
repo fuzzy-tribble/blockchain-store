@@ -11,9 +11,12 @@ import {
 } from "../mockData";
 import { ClientNames } from "../../src/lib/types";
 import Logger from "../../src/lib/logger";
+import { validateMany } from "../../src/helpers/db-helpers";
 
 // Silence logs while running tests
 Logger.transports.forEach((t) => (t.silent = true));
+
+// mongoose.set("debug", true);
 
 describe("Collection: token-prices", () => {
   before(async () => {
@@ -21,42 +24,44 @@ describe("Collection: token-prices", () => {
   });
 
   beforeEach(async () => {
-    // await mongoose.connection.dropDatabase();
-    // await mongoose.connect(mongodb_test_uri);
     await TokenPrice.collection.deleteMany({});
-    await Token.collection.deleteMany({});
-    // let nDocs = await TokenPrice.countDocuments();
-    // expect(nDocs).to.equal(0);
+    await Token.addData(mockTokens);
   });
 
   after(async () => {
     await mongoose.connection.close();
   });
 
-  it("should upsert TOKEN-PRICES", async () => {
-    let res = await TokenPrice.addData(mockTokenPrices);
-    expect(res.modifiedCount + res.upsertedCount).to.equal(
-      mockTokenPrices.length
-    );
+  describe("Validation: validate mock data", () => {
+    it("should be valid: mockTokenPrices", () => {
+      let res = validateMany(mockTokenPrices, TokenPrice.schema);
+      expect(res.validCount).to.equal(mockTokenPrices.length);
+      expect(res.validCount).to.not.equal(res.invalidCount);
+    });
   });
 
-  it("should upsert TOKEN-PRICES already in db", async () => {
-    let res1 = await TokenPrice.addData(mockTokenPrices);
-    let res2 = await TokenPrice.addData(mockTokenPricesUpdated);
-    expect(res2.modifiedCount + res2.upsertedCount).to.equal(
-      mockTokenPrices.length
-    );
-    expect(res1.upsertedIds).to.have.all.members(res2.modifiedIds);
-  });
-
-  it("should handle adding invalid TOKEN-PRICES (returns nChanged=0 and doesn't add to db)", async () => {
-    let res = await TokenPrice.addData(mockInvalidTokenPrices as any[]);
-    expect(res.modifiedCount + res.upsertedCount).to.equal(0);
-    expect(await TokenPrice.countDocuments()).to.equal(0);
+  describe("addData function", () => {
+    it("should upsert TOKEN-PRICES", async () => {
+      let res = await TokenPrice.addData(mockTokenPrices);
+      expect(res.upsertedCount).to.equal(mockTokenPrices.length);
+    });
+    it("should upsert TOKEN-PRICES already in db", async () => {
+      let res1 = await TokenPrice.addData(mockTokenPrices);
+      let res2 = await TokenPrice.addData(mockTokenPricesUpdated);
+      expect(res2.modifiedCount + res2.upsertedCount).to.equal(
+        mockTokenPrices.length
+      );
+      expect(res1.upsertedIds).to.have.all.members(res2.modifiedIds);
+    });
+    it("should handle adding invalid TOKEN-PRICES (returns nChanged=0 and doesn't add to db)", async () => {
+      let res = await TokenPrice.addData(mockInvalidTokenPrices as any[]);
+      expect(res.modifiedCount + res.upsertedCount).to.equal(0);
+      expect(await TokenPrice.countDocuments()).to.equal(0);
+    });
   });
 
   it("should findLatestTokenPrice from source", async () => {
-    let token = mockTokens[0];
+    let token = { uid: mockTokens[0].uid };
     let src = ClientNames.COINGECKO;
     await TokenPrice.addData([
       {
@@ -79,7 +84,7 @@ describe("Collection: token-prices", () => {
       },
     ]);
     let latestTokenPrice = await TokenPrice.findLatestTokenPriceFromSource(
-      token,
+      mockTokens[0],
       src
     );
     expect(latestTokenPrice?.priceInEth).to.equal(999);

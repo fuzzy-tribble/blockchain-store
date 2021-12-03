@@ -85,7 +85,6 @@ AccountSchema.statics.addData = async function (
   let updateRes: UpdateResult = {
     upsertedCount: 0,
     modifiedCount: 0,
-    matchedCount: 0,
     invalidCount: 0,
     upsertedIds: [],
     modifiedIds: [],
@@ -103,7 +102,6 @@ AccountSchema.statics.addData = async function (
 
         updateRes.upsertedCount = updateRes.upsertedCount + res.upsertedCount;
         updateRes.modifiedCount = updateRes.modifiedCount + res.modifiedCount;
-        updateRes.matchedCount = updateRes.matchedCount + res.matchedCount;
         doc ? updateRes.modifiedIds.push(doc.id) : "";
         res.upsertedId
           ? updateRes.upsertedIds.push(res.upsertedId.toString())

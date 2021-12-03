@@ -3,14 +3,7 @@ import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import Logger from "../../src/lib/logger";
 import { ClientNames, NetworkNames } from "../../src/lib/types";
-import {
-  Config,
-  IConfig,
-  IToken,
-  Token,
-  ITokenPrice,
-  TokenPrice,
-} from "../../src/models";
+import { Config, IConfig, Token, TokenPrice } from "../../src/models";
 import Coingecko from "../../src/clients/coingecko";
 import {
   CoingeckoCoinMarketData,
@@ -63,7 +56,7 @@ describe("Client: coingecko", () => {
         mockCoinMarketData
       );
       let res = validateMany(tokenPrices, TokenPrice.schema);
-      expect(res.validCount).to.equal(mockCoinMarketData.length);
+      expect(res.validCount).to.be.lessThan(mockCoinMarketData.length);
     });
   });
 
@@ -74,5 +67,21 @@ describe("Client: coingecko", () => {
     it("should fetch coins market data from api", () => {
       return expect(coingecko.updateTokenData()).to.eventually.be.not.empty;
     });
+  });
+
+  describe("Poll functions", () => {
+    it("should updateTokens and return valid tokens", async () => {
+      let clientFunctionResult = await coingecko.updateTokens();
+      let tokens = clientFunctionResult.data;
+      let res = validateMany(tokens, Token.schema);
+      expect(res.validCount).to.equal(tokens.length);
+    }).timeout(15 * 1000);
+
+    it("should updateTokenData and return valid token prices", async () => {
+      let clientFunctionResult = await coingecko.updateTokenData();
+      let tokenPrices = clientFunctionResult.data;
+      let res = validateMany(tokenPrices, TokenPrice.schema);
+      expect(res.validCount).to.equal(tokenPrices.length);
+    }).timeout(15 * 1000);
   });
 });
