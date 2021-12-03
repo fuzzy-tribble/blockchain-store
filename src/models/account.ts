@@ -7,7 +7,7 @@ import {
   Schema,
 } from "mongoose";
 import Logger from "../lib/logger";
-import { ClientNames, NetworkNames, UpdateResult } from "../lib/types";
+import { ClientNames, UpdateResult } from "../lib/types";
 import {
   defaultQueryOptions,
   defaultSchemaOpts,
@@ -68,7 +68,9 @@ const AccountSchemaFields: Record<keyof IAccount, any> = {
 const AccountSchema = new Schema(AccountSchemaFields, defaultSchemaOpts);
 AccountSchema.index({ client: 1, network: 1, address: 1 }, { unique: true });
 
-AccountSchema.pre(["updateOne"], updateValidation);
+AccountSchema.pre(["updateOne"], function () {
+  updateValidation(this.getUpdate(), AccountSchema.obj);
+});
 
 AccountSchema.post(["findOneAndUpdate"], function (res) {
   Logger.info({
@@ -122,66 +124,6 @@ AccountSchema.statics.addData = async function (
   });
   return updateRes;
 };
-
-// AccountSchema.statics.addDataAndGetIds = async function (
-//   accounts: IAccount[]
-// ): Promise<Array<number | undefined>> {
-//   let returnResult: Array<number | undefined> = [];
-//   let options: QueryOptions = {
-//     // returnDocument: "after",
-//     upsert: true,
-//     runValidators: true,
-//     new: true, // otherwise will fail on empty collection
-//   };
-//   try {
-//     returnResult = await Promise.all(
-//       accounts.map(async (account) => {
-//         let filter: FilterQuery<IAccountDoc> = {
-//           address: account.address,
-//           client: account.client,
-//           network: account.network,
-//         };
-//         let accountDoc = await Account.findOneAndUpdate(
-//           filter,
-//           account,
-//           options
-//         );
-//         return accountDoc?._id;
-//       })
-//     );
-//   } catch (err) {
-//     Logger.error({
-//       at: "Database#addDataAndGetIds",
-//       message: `Error updating accounts.`,
-//       error: err,
-//     });
-//   } finally {
-//     return returnResult;
-//   }
-// };
-
-// AccountSchema.statics.findByClientNetworkToken = async function (
-//   client: ClientNames,
-//   network: NetworkNames,
-//   token: IToken
-// ) {
-//   const filter = {
-//     client: client,
-//     network: network,
-//     reserveIds: {},
-//   };
-//   Account.find(filter, function (err, docs) {});
-// };
-
-// AccountSchema.virtual("health").get(async function (): Promise<IAccountHealth> {
-//   // TODO - implement
-//   return {
-//     underCollateralizationRiskScore: 0,
-//     totalBorrowedInEth: 0,
-//     totalCollateralInEth: 0,
-//     totalLiquidationThreshold: 0,
-//   };
-// });
 
 const Account = model<IAccountDoc, IAccountModel>("accounts", AccountSchema);
 

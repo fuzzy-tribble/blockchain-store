@@ -50,7 +50,9 @@ TokenPriceSchema.index(
   { unique: true }
 );
 
-TokenPriceSchema.pre(["updateOne"], updateValidation);
+TokenPriceSchema.pre(["updateOne"], function () {
+  updateValidation(this.getUpdate(), TokenPriceSchema.obj);
+});
 
 TokenPriceSchema.post(["findOneAndUpdate"], function (res) {
   Logger.info({

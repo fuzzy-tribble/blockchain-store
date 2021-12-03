@@ -40,7 +40,7 @@ export default abstract class Client {
     });
 
     // Start listeners
-    this.conf.listeners.forEach((listener) => {
+    this.conf.listenerNames.forEach((listener) => {
       // TODO
       // this._addListener(listener);
     });

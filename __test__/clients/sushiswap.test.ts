@@ -1,12 +1,8 @@
+import mongoose from "mongoose";
 import { expect } from "chai";
 import { Config, IConfig } from "../../src/models";
 import Sushiswap from "../../src/clients/sushiswap";
-import {
-  mockSushiswapPairData,
-  mockSushiswapTokenData,
-  mongodb_test_uri,
-} from "../mockData";
-import mongoose from "mongoose";
+import { mongodb_test_uri } from "../mockData";
 import { ClientNames, NetworkNames } from "../../src/lib/types";
 
 describe("sushiswap-client", () => {

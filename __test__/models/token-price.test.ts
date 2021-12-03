@@ -61,21 +61,21 @@ describe("Collection: token-prices", () => {
     await TokenPrice.addData([
       {
         token: token,
-        priceInEth: 999,
+        priceInEth: "999",
         source: src,
-        lastUpdated: Date.now(),
+        lastUpdated: Date.now().toString(),
       },
       {
         token: token,
-        priceInEth: 456,
+        priceInEth: "456",
         source: src,
-        lastUpdated: new Date().setDate(Date.now() - 1),
+        lastUpdated: new Date().setDate(Date.now() - 1).toString(),
       },
       {
         token: token,
-        priceInEth: 123,
+        priceInEth: "123",
         source: src,
-        lastUpdated: new Date().setDate(Date.now() - 0.5),
+        lastUpdated: new Date().setDate(Date.now() - 0.5).toString(),
       },
     ]);
     let latestTokenPrice = await TokenPrice.findLatestTokenPriceFromSource(

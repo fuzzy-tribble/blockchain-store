@@ -1,22 +1,32 @@
 import mongoose from "mongoose";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { mockTokens, mongodb_test_uri } from "../mockData";
 import {
-  defaultQueryOptions,
-  defaultSchemaOpts,
+  mockAccounts,
+  mockReserves,
+  mockEvents,
+  mongodb_test_uri,
+} from "../mockData";
+import {
   updateValidation,
-  //   updateDatabase,
-  validateRequiredFields,
   validateMany,
+  updateDatabase,
 } from "../../src/helpers/db-helpers";
 import Logger from "../../src/lib/logger";
+import {
+  ClientFunctionResult,
+  ClientNames,
+  CollectionNames,
+} from "../../src/lib/types";
+import { Account, Reserve, Event } from "../../src/models";
 
 // Use chai-as-promised plugin for async throws
 chai.use(chaiAsPromised);
 
 // Silence logs while running tests
 Logger.transports.forEach((t) => (t.silent = true));
+
+// mongoose.set("debug", true);
 
 describe("Helpers: db-helpers", () => {
   before(async () => {
@@ -27,16 +37,72 @@ describe("Helpers: db-helpers", () => {
     mongoose.connection.close();
   });
 
-  it("should validateMany", async () => {
+  describe("Validator helpers", () => {
     const kittySchemaFields = {
       name: { type: String, required: true },
     };
     const kittySchema = new mongoose.Schema(kittySchemaFields);
     const Kitten = mongoose.model("Kitten", kittySchema);
-    await Kitten.deleteMany({});
-    const silence = new Kitten({ name: "Silence" });
-    await silence.save();
-    let res = validateMany([silence], Kitten.schema);
-    expect(res.validCount).to.equal(1);
+
+    // beforeEach(async () => {
+    //   await Kitten.deleteMany({});
+    // });
+
+    it("should validateMany", async () => {
+      const silence = new Kitten({ name: "Silence" });
+      await silence.save();
+      let res = validateMany([silence], Kitten.schema);
+      expect(res.validCount).to.equal(1);
+    });
+
+    it("should run updateValidation pre updateOne", async () => {
+      kittySchema.pre(["updateOne"], function () {
+        updateValidation(this.getUpdate(), kittySchema.obj);
+      });
+      let res = await Kitten.updateOne({ name: "Silence" }, { name: "Scream" });
+      expect(res.modifiedCount).to.equal(1);
+    });
+  });
+
+  describe("Database update helpers", () => {
+    beforeEach(async () => {
+      await Account.deleteMany({});
+      await Reserve.deleteMany({});
+      await Event.deleteMany({});
+    });
+
+    it("should updateDatabase (mockAccountData)", async () => {
+      let functionResult: ClientFunctionResult = {
+        status: false,
+        client: ClientNames.AAVE,
+        network: "mainnet",
+        collection: CollectionNames.ACCOUNTS,
+        data: mockAccounts,
+      };
+      let res = await updateDatabase(functionResult);
+      expect(res.invalidCount).to.equal(0);
+    });
+    it("should updateDatabase (mockReserveData)", async () => {
+      let functionResult: ClientFunctionResult = {
+        status: false,
+        client: ClientNames.AAVE,
+        network: "mainnet",
+        collection: CollectionNames.RESERVES,
+        data: mockReserves,
+      };
+      let res = await updateDatabase(functionResult);
+      expect(res.invalidCount).to.equal(0);
+    });
+    it("should updateDatabase (mockEventData)", async () => {
+      let functionResult: ClientFunctionResult = {
+        status: false,
+        client: ClientNames.AAVE,
+        network: "mainnet",
+        collection: CollectionNames.EVENTS,
+        data: mockEvents,
+      };
+      let res = await updateDatabase(functionResult);
+      expect(res.invalidCount).to.equal(0);
+    });
   });
 });

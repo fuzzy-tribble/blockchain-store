@@ -3,8 +3,10 @@ import mongoose from "mongoose";
 import { loadClients } from "./clients";
 // import eventSocket from "./helpers/socket-helpers";
 
+if (!process.env.MONGODB_URL) new Error("MONGODB_URL isn't defined");
+
 async function start() {
-  await mongoose.connect(process.env.MONGODB_URL);
+  await mongoose.connect(process.env.MONGODB_URL as string);
   // mongoose.connection.readyState == 1
   // await eventSocket.ready();
 

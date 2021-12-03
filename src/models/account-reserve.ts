@@ -46,7 +46,9 @@ const AccountReserveSchema = new Schema(
 );
 AccountReserveSchema.index({ account: 1, reserve: 1 }, { unique: true });
 
-AccountReserveSchema.pre(["updateOne"], updateValidation);
+AccountReserveSchema.pre(["updateOne"], function () {
+  updateValidation(this.getUpdate(), AccountReserveSchema.obj);
+});
 
 AccountReserveSchema.post(["findOneAndUpdate"], function (res) {
   Logger.info({

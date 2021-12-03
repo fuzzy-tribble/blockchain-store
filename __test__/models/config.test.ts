@@ -17,8 +17,7 @@ describe("configs-db", () => {
       mockClientConfigs[0].client,
       mockClientConfigs[0].network
     );
-    expect(conf.accountStore.isEnabled).to.equal(
-      mockClientConfigs[0].accountStore.isEnabled
-    );
+    expect(conf.client).to.equal(mockClientConfigs[0].client);
+    expect(conf.network).to.equal(mockClientConfigs[0].network);
   });
 });

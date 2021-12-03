@@ -17,6 +17,8 @@ chai.use(chaiAsPromised);
 // Silence logs while running tests
 Logger.transports.forEach((t) => (t.silent = true));
 
+// mongoose.set("debug", true);
+
 describe("Collection: accounts", () => {
   before(async () => {
     await mongoose.connect(mongodb_test_uri);

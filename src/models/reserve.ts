@@ -58,7 +58,9 @@ const ReserveSchemaFields: Record<keyof IReserve, any> = {
 const ReserveSchema = new Schema(ReserveSchemaFields, defaultSchemaOpts);
 ReserveSchema.index({ client: 1, network: 1, address: 1 }, { unique: true });
 
-ReserveSchema.pre(["updateOne"], updateValidation);
+ReserveSchema.pre(["updateOne"], function () {
+  updateValidation(this.getUpdate(), ReserveSchema.obj);
+});
 
 ReserveSchema.post(["findOneAndUpdate"], function (res) {
   Logger.info({
@@ -170,8 +172,6 @@ ReserveSchema.statics.addData = async function (
 
   return updateRes;
 };
-
-// ReserveSchema.statics.findMostInteresting = async function () {};
 
 const Reserve = model<IReserveDoc, IReserveModel>("reserves", ReserveSchema);
 

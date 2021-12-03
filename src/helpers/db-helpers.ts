@@ -1,5 +1,5 @@
-import { Schema, Error, QueryOptions, Query } from "mongoose";
-// import { Account, IAccount, Reserve, IReserve, Event, IEvent } from "../models";
+import { Schema, Error, QueryOptions } from "mongoose";
+import { Account, IAccount, Reserve, IReserve, Event, IEvent } from "../models";
 import {
   ClientFunctionResult,
   CollectionNames,
@@ -28,19 +28,14 @@ Schema.Types.String.checkRequired((v) => {
   return typeof v === "string";
 });
 
-export function updateValidation(this) {
-  let objectOfInterest = this.getUpdate();
-  if (!objectOfInterest) {
-    objectOfInterest = this.getFilter();
-  }
+export function updateValidation(updateObject, schemaObject) {
   let requiredFields: string[] = [];
-  let schemaObject = this["schema"]["obj"];
   Object.keys(schemaObject).forEach((key) => {
     if (schemaObject[key].required && schemaObject[key].default == undefined) {
       requiredFields.push(key);
     }
   });
-  validateRequiredFields(objectOfInterest as object, requiredFields);
+  validateRequiredFields(updateObject, requiredFields);
 }
 
 // Validators are not run on undefined values (the
@@ -115,19 +110,19 @@ export const updateDatabase = async (
     upsertedIds: [],
     modifiedIds: [],
   };
-  // switch (fRes.collection) {
-  //   case CollectionNames.ACCOUNTS:
-  //     res = await Account.addData(fRes.data as IAccount[]);
-  //     break;
-  //   case CollectionNames.RESERVES:
-  //     res = await Reserve.addData(fRes.data as IReserve[]);
-  //     break;
-  //   case CollectionNames.EVENTS:
-  //     res = await Event.addData(fRes.data as IEvent[]);
-  //     break;
-  //   default:
-  //     // TEST Collection or anything else
-  //     break;
-  // }
+  switch (fRes.collection) {
+    case CollectionNames.ACCOUNTS:
+      res = await Account.addData(fRes.data);
+      break;
+    case CollectionNames.RESERVES:
+      res = await Reserve.addData(fRes.data as IReserve[]);
+      break;
+    case CollectionNames.EVENTS:
+      res = await Event.addData(fRes.data as IEvent[]);
+      break;
+    default:
+      // TEST Collection or anything else
+      break;
+  }
   return res;
 };

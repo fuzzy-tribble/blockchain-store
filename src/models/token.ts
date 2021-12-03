@@ -46,7 +46,9 @@ const TokenSchemaFields: Record<keyof IToken, any> = {
 const TokenSchema = new Schema(TokenSchemaFields, defaultSchemaOpts);
 TokenSchema.index({ uid: 1 }, { unique: true });
 
-TokenSchema.pre(["updateOne"], updateValidation);
+TokenSchema.pre(["updateOne"], function () {
+  updateValidation(this.getUpdate(), TokenSchema.obj);
+});
 
 TokenSchema.post(["findOneAndUpdate"], function (res) {
   Logger.info({

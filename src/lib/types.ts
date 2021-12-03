@@ -34,6 +34,7 @@ export enum CollectionNames {
   TEST = "test",
 }
 
+// TODO - remove
 export enum NetworkNames {
   MAINNET = "mainnet",
   POLYGON = "polygon",
@@ -72,7 +73,7 @@ export interface ClientFunction {
 export interface ClientFunctionResult {
   status: boolean;
   client: ClientNames;
-  network: NetworkNames;
+  network: string;
   collection: CollectionNames;
   data: any;
 }

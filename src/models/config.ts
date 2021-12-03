@@ -42,6 +42,7 @@ export interface IConfigModel extends Model<IConfigDoc> {
     client: ClientNames,
     network: NetworkNames
   ): Promise<number>;
+  findAll(): Promise<IConfig[]>;
   findByClientNetwork(
     client: ClientNames,
     network: NetworkNames
@@ -71,6 +72,21 @@ ConfigSchema.statics.getLastBlockChecked = async function (
 ): Promise<number> {
   // TODO - implement
   return 0;
+};
+
+ConfigSchema.statics.findAll = async function (): Promise<IConfig[]> {
+  let clientConfigs: IConfig[] = [];
+  try {
+    clientConfigs = await Config.find({}).exec();
+  } catch (err) {
+    Logger.error({
+      at: "Database#findAll",
+      message: `Error getting all client confs.`,
+      error: err,
+    });
+  } finally {
+    return clientConfigs;
+  }
 };
 
 ConfigSchema.statics.findByClientNetwork = async function (
