@@ -15,29 +15,50 @@ import {
   CollectionNames,
 } from "../../src/lib/types";
 import Client from "../../src/lib/client";
+import { gql } from "@apollo/client/core";
+import { delay } from "../../src/helpers/delay";
 
 export const mongodb_test_uri = `mongodb://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@127.0.0.1:27017`;
 export const mockValidUrl =
   "https://random-data-api.com/api/address/random_address";
 export const mockInvalidUrl = "https://api.com/poop";
 
+export const mockGqlQuery = gql`
+  query GetReserveData {
+    reserves(where: { usageAsCollateralEnabled: true }) {
+      id
+      name
+      price {
+        id
+      }
+      liquidityRate
+      variableBorrowRate
+      stableBorrowRate
+      symbol
+      decimals
+    }
+  }
+`;
+export const mockGqlEndpoint =
+  "https://api.thegraph.com/subgraphs/name/aave/protocol-v2";
+
 export const mockEvents: Array<IEvent> = [
   // DUPLICATE EVENTS SHOULD NOT OVERWRITE
   {
     name: EventNames.ARBITRAGE,
-    client: ClientNames.AAVE,
+    source: ClientNames.AAVE,
     data: { somestuff: "slemkla" },
   },
   {
     name: EventNames.ARBITRAGE,
-    client: ClientNames.AAVE,
+    source: ClientNames.AAVE,
     data: { somestuff: "slemkla" },
   },
   // DATALESS EVENTS SHOULD BE INSERTED
   {
     name: EventNames.LIQUIDATABLE_ACCOUNT,
     network: NetworkNames.KOVAN,
-    client: ClientNames.AAVE,
+    source: ClientNames.AAVE,
   },
 ];
 
@@ -212,21 +233,20 @@ export const mockReserves: Array<IReserve> = [
   {
     client: ClientNames.AAVE,
     network: NetworkNames.MAINNET,
-    address:
-      "0x0000000000085d4780b73119b644ae5ecd22b3760xb53c1a33016b2dc2ff3653530bff1848a515c8c5",
+    uid: "0x0000000000085d4780b73119b644ae5ecd22b3760xb53c1a33016b2dc2ff3653530bff1848a515c8c5",
     tokens: [mockTokens[0]],
   },
   // FROM SUSHISWAP
   {
     client: ClientNames.SUSHISWAP,
     network: NetworkNames.MAINNET,
-    address: "0x055cedfe14bce33f985c41d9a1934b7654611aac",
+    uid: "0x055cedfe14bce33f985c41d9a1934b7654611aac",
     tokens: [mockTokens[0], mockTokens[1]],
   },
   {
     client: ClientNames.SUSHISWAP,
     network: NetworkNames.MAINNET,
-    address: "0x05767d9ef41dc40689678ffca0608878fb3de906",
+    uid: "0x05767d9ef41dc40689678ffca0608878fb3de906",
     tokens: mockTokens,
   },
 ];
@@ -236,15 +256,14 @@ export const mockReservesUpdated: Array<IReserve> = [
     // update tokens
     client: ClientNames.AAVE,
     network: NetworkNames.MAINNET,
-    address:
-      "0x0000000000085d4780b73119b644ae5ecd22b3760xb53c1a33016b2dc2ff3653530bff1848a515c8c5",
+    uid: "0x0000000000085d4780b73119b644ae5ecd22b3760xb53c1a33016b2dc2ff3653530bff1848a515c8c5",
     tokens: [mockTokens[0], mockTokens[1]],
   },
   {
     // add additional data
     client: ClientNames.SUSHISWAP,
     network: NetworkNames.MAINNET,
-    address: "0x055cedfe14bce33f985c41d9a1934b7654611aac",
+    uid: "0x055cedfe14bce33f985c41d9a1934b7654611aac",
     additionalData: 9023948290,
     tokens: mockTokens,
   },
@@ -252,7 +271,7 @@ export const mockReservesUpdated: Array<IReserve> = [
     // changed network name
     client: ClientNames.SUSHISWAP,
     network: NetworkNames.POLYGON,
-    address: "0x05767d9ef41dc40689678ffca0608878fb3de906",
+    uid: "0x05767d9ef41dc40689678ffca0608878fb3de906",
     tokens: [mockTokens[1]],
   },
 ];
@@ -306,7 +325,7 @@ export const mockAccountReservesUpdated: Array<IAccountReserve> = [
       network: mockAccounts[1].network,
     },
     reserve: {
-      address: mockReserves[0].address,
+      uid: mockReserves[0].address,
       client: mockReserves[0].client,
       network: mockReserves[0].network,
       tokens: mockReserves[0].tokens,
@@ -361,22 +380,40 @@ export class MockClient extends Client {
   constructor() {
     super(conf);
   }
+  // client function result and db result success
   mockPollFunction1 = async (): Promise<ClientFunctionResult> => {
+    await delay(1 * 1000);
     return {
       success: true,
       client: this.conf.client,
       network: this.conf.network,
-      collection: CollectionNames.TEST,
-      data: "mockPollFunction1 result data",
+      data: [
+        {
+          collectionName: CollectionNames.TEST,
+          data: ["test data"],
+        },
+      ],
     };
   };
-  mockPollFunction2 = async () => {
+  // Client function fail and db fail
+  mockPollFunction2 = async (): Promise<ClientFunctionResult> => {
+    await delay(2 * 1000);
     return {
-      status: true,
+      success: false,
       client: this.conf.client,
       network: this.conf.network,
-      collection: CollectionNames.TEST,
-      data: "mockPollFunction2 result data",
+      data: [],
     };
   };
+
+  // // Client function success and db fail
+  // mockPollFunction3 = async (): Promise<ClientFunctionResult> => {
+  //   await delay(1 * 1000);
+  //   return {
+  //     success: true,
+  //     client: this.conf.client,
+  //     network: this.conf.network,
+  //     data: [],
+  //   };
+  // };
 }

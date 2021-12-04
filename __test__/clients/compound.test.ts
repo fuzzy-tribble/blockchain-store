@@ -1,25 +1,34 @@
 import mongoose from "mongoose";
-import { expect } from "chai";
+import chai, { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
 import { Config, IConfig } from "../../src/models";
-import Sushiswap from "../../src/clients/sushiswap";
-import { mongodb_test_uri } from "../mockData";
-import { ClientNames, NetworkNames } from "../../src/lib/types";
+import Logger from "../../src/lib/logger";
 
-describe("sushiswap-client", () => {
-  let sushiswap: Sushiswap;
+import { ClientNames, NetworkNames } from "../../src/lib/types";
+import { mongodb_test_uri } from "../mockData";
+import Compound from "../../src/clients/compound";
+
+// Use chai-as-promised plugin for async throws
+chai.use(chaiAsPromised);
+
+// Silence logs while running tests
+Logger.transports.forEach((t) => (t.silent = true));
+
+describe("Client: dydx", () => {
+  let compound: Compound;
   let conf: IConfig | null;
 
   before(async () => {
     await mongoose.connect(mongodb_test_uri);
     conf = await Config.findByClientNetwork(
-      ClientNames.SUSHISWAP,
+      ClientNames.COMPOUND,
       NetworkNames.MAINNET
     );
     if (!conf) {
       throw Error("conf not found for client/network supplied.");
     }
-    sushiswap = new Sushiswap(conf);
-    await sushiswap.setup();
+    compound = new Compound(conf);
+    await compound.setup();
   });
 
   after(async () => {

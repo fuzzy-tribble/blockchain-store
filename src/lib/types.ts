@@ -1,4 +1,12 @@
 import { EventFilter } from "ethers";
+import {
+  IAccount,
+  IAccountReserve,
+  IReserve,
+  IToken,
+  ITokenPrice,
+  IEvent,
+} from "../models";
 
 // ============ Types ============
 
@@ -27,10 +35,10 @@ export enum CollectionNames {
   CONFIGS = "configs",
   EVENTS = "events",
   ACCOUNTS = "accounts",
-  ACCOUNT_RESERVES = "account-reserves",
+  ACCOUNT_RESERVES = "accountReserves",
   RESERVES = "reserves",
   TOKENS = "tokens",
-  TOKEN_PRICES = "token-prices",
+  TOKEN_PRICES = "tokenPrices",
   TEST = "test",
 }
 
@@ -74,16 +82,27 @@ export interface ClientFunctionResult {
   success: boolean;
   client: ClientNames;
   network: string;
-  collection: CollectionNames;
-  data: any;
+  data: DatabaseUpdate[];
 }
 
-export interface UpdateResult {
+export interface DatabaseUpdate {
+  collectionName: CollectionNames;
+  data: any[];
+  // data:
+  //   | IToken[]
+  //   | ITokenPrice[]
+  //   | IReserve[]
+  //   | IAccountReserve[]
+  //   | IAccount[]
+  //   | IEvent[];
+}
+export interface DatabaseUpdateResult {
   upsertedCount: number;
   modifiedCount: number;
   invalidCount: number;
   upsertedIds: string[];
   modifiedIds: string[];
+  errors?: string[];
 }
 // ==================================
 

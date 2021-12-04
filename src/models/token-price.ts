@@ -1,10 +1,10 @@
 import { Document, FilterQuery, model, Model, Schema } from "mongoose";
 import { IToken, Token, ITokenDoc } from "./token";
-import { ClientNames, UpdateResult } from "../lib/types";
+import { ClientNames, DatabaseUpdateResult } from "../lib/types";
 import {
   defaultQueryOptions,
   defaultSchemaOpts,
-  updateValidation,
+  customRequiredFieldsValidation,
 } from "../helpers/db-helpers";
 import Logger from "../lib/logger";
 
@@ -25,7 +25,7 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface ITokenPriceModel extends Model<ITokenPriceDoc> {
-  addData(tokenPrices: ITokenPrice[]): Promise<UpdateResult>;
+  addData(tokenPrices: ITokenPrice[]): Promise<DatabaseUpdateResult>;
   findLatestTokenPriceFromSource(
     token: IToken,
     source: ClientNames
@@ -51,20 +51,13 @@ TokenPriceSchema.index(
 );
 
 TokenPriceSchema.pre(["updateOne"], function () {
-  updateValidation(this.getUpdate(), TokenPriceSchema.obj);
+  customRequiredFieldsValidation(this.getUpdate(), TokenPriceSchema.obj);
 });
-
-// TokenPriceSchema.post(["findOneAndUpdate"], function (res) {
-//   Logger.info({
-//     at: "Database#postUpdateTokenPrice",
-//     message: `Token price updated: ${res.token}.${res.priceInEth} (${res.source})`,
-//   });
-// });
 
 TokenPriceSchema.statics.addData = async function (
   tokenPrices: ITokenPrice[]
-): Promise<UpdateResult> {
-  let updateRes: UpdateResult = {
+): Promise<DatabaseUpdateResult> {
+  let updateRes: DatabaseUpdateResult = {
     upsertedCount: 0,
     modifiedCount: 0,
     invalidCount: 0,
@@ -154,7 +147,7 @@ TokenPriceSchema.statics.findPriceDiscrepanciesBySource = async function (
 };
 
 const TokenPrice = model<ITokenPriceDoc, ITokenPriceModel>(
-  "token-prices",
+  "tokenPrices",
   TokenPriceSchema
 );
 

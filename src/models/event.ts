@@ -1,15 +1,10 @@
 import { Document, InsertManyOptions, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
-import {
-  NetworkNames,
-  ClientNames,
-  EventNames,
-  UpdateResult,
-} from "../lib/types";
+import { ClientNames, EventNames, DatabaseUpdateResult } from "../lib/types";
 export interface IEvent {
   name: EventNames;
-  client: ClientNames;
-  network?: NetworkNames;
+  source: ClientNames;
+  network?: string;
   data?: {};
 }
 
@@ -19,13 +14,13 @@ export interface IEventDoc extends IEvent, Document {}
 enum PropertyNames {
   NAME = "name",
   NETWORK = "network",
-  CLIENT = "client",
+  SOURCE = "source",
   DATA = "data",
 }
 
 // MODEL DEFS //
 export interface IEventModel extends Model<IEventDoc> {
-  addData(events: IEvent[]): Promise<UpdateResult>;
+  addData(events: IEvent[]): Promise<DatabaseUpdateResult>;
   findLiquidationEvents(): Promise<IEventDoc[]>;
   propertyNames: typeof PropertyNames;
 }
@@ -35,8 +30,8 @@ Schema.Types.String.checkRequired((v) => typeof v === "string");
 // SCHEMA DEFS //
 const EventSchemaFields: Record<keyof IEvent, any> = {
   name: { type: String, required: true },
-  client: { type: String, enum: ClientNames, required: true },
-  network: { type: String, enum: NetworkNames, required: false },
+  source: { type: String, required: true },
+  network: { type: String, required: false },
   data: { type: Object, required: false },
 };
 
@@ -48,8 +43,8 @@ const EventSchema = new Schema(EventSchemaFields, schemaOpts);
 
 EventSchema.statics.addData = async function (
   events: IEvent[]
-): Promise<UpdateResult> {
-  let updateRes: UpdateResult = {
+): Promise<DatabaseUpdateResult> {
+  let updateRes: DatabaseUpdateResult = {
     upsertedCount: 0,
     modifiedCount: 0,
     invalidCount: 0,

@@ -6,13 +6,18 @@ import { ClientNames, NetworkNames } from "../../src/lib/types";
 import { Config, IConfig, Token, TokenPrice } from "../../src/models";
 import Coingecko from "../../src/clients/coingecko";
 import {
-  CoingeckoCoinMarketData,
-  CoingeckoCoinPlatformData,
   parseCoinMarketDataFromApi,
   parseCoinsAndPlatformsFromApi,
 } from "../../src/clients/helpers/coingecko-helpers";
+import {
+  CoingeckoCoinMarketData,
+  CoingeckoCoinPlatformData,
+} from "../../src/clients/helpers/coingecko-types";
 import { mongodb_test_uri } from "../mockData";
 import { validateMany } from "../../src/helpers/db-helpers";
+
+const mockCoinsAndPlatforms: CoingeckoCoinPlatformData[] = require("../mockData/coingecko/coinsAndPlatforms.json");
+const mockCoinMarketData: CoingeckoCoinMarketData[] = require("../mockData/coingecko/coinMarketData.json");
 
 // Use chai-as-promised plugin for async throws
 chai.use(chaiAsPromised);
@@ -20,8 +25,7 @@ chai.use(chaiAsPromised);
 // Silence logs while running tests
 Logger.transports.forEach((t) => (t.silent = true));
 
-const mockCoinsAndPlatforms: CoingeckoCoinPlatformData[] = require("../mockData/coingecko/coinsAndPlatforms.json");
-const mockCoinMarketData: CoingeckoCoinMarketData[] = require("../mockData/coingecko/coinMarketData.json");
+// mongoose.set("debug", true);
 
 describe("Client: coingecko", () => {
   let coingecko: Coingecko;
@@ -46,17 +50,19 @@ describe("Client: coingecko", () => {
 
   describe("Parse api data", () => {
     it("should parse coins data from api", () => {
-      let tokens = parseCoinsAndPlatformsFromApi(mockCoinsAndPlatforms);
-      let res = validateMany(tokens, Token.schema);
-      expect(res.validCount).to.equal(mockCoinsAndPlatforms.length);
+      let parsedData = parseCoinsAndPlatformsFromApi(mockCoinsAndPlatforms);
+      let res = validateMany(parsedData[0].data, Token.schema);
+      expect(res.validCount).to.not.equal(0);
+      expect(res.validCount).to.be.lessThan(mockCoinsAndPlatforms.length);
     });
     it("should parse coins market from api", () => {
-      let tokenPrices = parseCoinMarketDataFromApi(
+      let parsedData = parseCoinMarketDataFromApi(
         coingecko.conf.client,
         mockCoinMarketData
       );
-      let res = validateMany(tokenPrices, TokenPrice.schema);
-      expect(res.validCount).to.be.lessThan(mockCoinMarketData.length);
+      let res = validateMany(parsedData[0].data, TokenPrice.schema);
+      expect(res.validCount).to.not.equal(0);
+      expect(res.validCount).to.be.lessThanOrEqual(mockCoinMarketData.length);
     });
   });
 
@@ -72,14 +78,14 @@ describe("Client: coingecko", () => {
   describe("Poll functions", () => {
     it("should updateTokens and return valid tokens", async () => {
       let clientFunctionResult = await coingecko.updateTokens();
-      let tokens = clientFunctionResult.data;
+      let tokens = clientFunctionResult.data[0].data;
       let res = validateMany(tokens, Token.schema);
       expect(res.validCount).to.equal(tokens.length);
     }).timeout(15 * 1000);
 
     it("should updateTokenData and return valid token prices", async () => {
       let clientFunctionResult = await coingecko.updateTokenData();
-      let tokenPrices = clientFunctionResult.data;
+      let tokenPrices = clientFunctionResult.data[0].data;
       let res = validateMany(tokenPrices, TokenPrice.schema);
       expect(res.validCount).to.equal(tokenPrices.length);
     }).timeout(15 * 1000);

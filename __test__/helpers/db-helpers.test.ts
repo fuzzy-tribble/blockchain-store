@@ -8,7 +8,7 @@ import {
   mongodb_test_uri,
 } from "../mockData";
 import {
-  updateValidation,
+  customRequiredFieldsValidation,
   validateMany,
   updateDatabase,
 } from "../../src/helpers/db-helpers";
@@ -57,7 +57,7 @@ describe("Helpers: db-helpers", () => {
 
     it("should run updateValidation pre updateOne", async () => {
       kittySchema.pre(["updateOne"], function () {
-        updateValidation(this.getUpdate(), kittySchema.obj);
+        customRequiredFieldsValidation(this.getUpdate(), kittySchema.obj);
       });
       let res = await Kitten.updateOne({ name: "Silence" }, { name: "Scream" });
       expect(res.modifiedCount).to.equal(1);
@@ -76,33 +76,34 @@ describe("Helpers: db-helpers", () => {
         success: false,
         client: ClientNames.AAVE,
         network: "mainnet",
-        collection: CollectionNames.ACCOUNTS,
-        data: mockAccounts,
+        data: [
+          { collectionName: CollectionNames.ACCOUNTS, data: mockAccounts },
+        ],
       };
-      let res = await updateDatabase(functionResult);
-      expect(res.invalidCount).to.equal(0);
+      let res = await updateDatabase(functionResult.data);
+      expect(res.success).to.be.true;
     });
     it("should updateDatabase (mockReserveData)", async () => {
       let functionResult: ClientFunctionResult = {
         success: false,
         client: ClientNames.AAVE,
         network: "mainnet",
-        collection: CollectionNames.RESERVES,
-        data: mockReserves,
+        data: [
+          { collectionName: CollectionNames.RESERVES, data: mockReserves },
+        ],
       };
-      let res = await updateDatabase(functionResult);
-      expect(res.invalidCount).to.equal(0);
+      let res = await updateDatabase(functionResult.data);
+      expect(res.success).to.be.true;
     });
     it("should updateDatabase (mockEventData)", async () => {
       let functionResult: ClientFunctionResult = {
         success: false,
         client: ClientNames.AAVE,
         network: "mainnet",
-        collection: CollectionNames.EVENTS,
-        data: mockEvents,
+        data: [{ collectionName: CollectionNames.EVENTS, data: mockEvents }],
       };
-      let res = await updateDatabase(functionResult);
-      expect(res.invalidCount).to.equal(0);
+      let res = await updateDatabase(functionResult.data);
+      expect(res.success).to.be.true;
     });
   });
 });

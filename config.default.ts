@@ -12,6 +12,10 @@ const dydxConfigs: IConfig = {
       name: "getNewReserves",
       frequency: 24 * 60 * 60 * 1000, // every 24 hours
     },
+    // {
+    //   name: "checkForLiquidatableAccounts",
+    //   frequency: 24 * 60 * 60 * 1000, // every 10 minutes
+    // },
   ],
   listenerNames: [],
   dataSources: {
@@ -959,7 +963,8 @@ const aaveMainnetConfigs: IConfig = {
     },
     apis: {
       baseUrl: "https://aave-api-v2.aave.com/",
-      liquidationsUrl: "https://protocol-api.aave.com/liquidations?get=proto",
+      liquidatableAccountReserves:
+        "https://protocol-api.aave.com/liquidations?get=proto",
     },
     graphql: {
       endpoint: "https://api.thegraph.com/subgraphs/name/aave/protocol-v2",
@@ -1007,18 +1012,6 @@ const aaveMainnetConfigs: IConfig = {
   },
 };
 
-const aaveKovanConfigs: IConfig = {
-  client: ClientNames.AAVE,
-  network: NetworkNames.KOVAN,
-  pollFunctions: [],
-  listenerNames: [],
-  dataSources: {
-    blockchain: {},
-    apis: {},
-    graphql: {},
-  },
-};
-
 const sushiswapMainnet: IConfig = {
   client: ClientNames.SUSHISWAP,
   network: NetworkNames.MAINNET,
@@ -1046,10 +1039,40 @@ const sushiswapMainnet: IConfig = {
   },
 };
 
+const compound: IConfig = {
+  client: ClientNames.COMPOUND,
+  network: NetworkNames.MAINNET,
+  pollFunctions: [],
+  listenerNames: [],
+  dataSources: {
+    blockchain: {},
+    apis: {
+      baseUrl: "https://api.compound.finance/api",
+    },
+    graphql: {},
+  },
+};
+
+const uniswapMainnet: IConfig = {
+  client: ClientNames.UNISWAP,
+  network: NetworkNames.MAINNET,
+  pollFunctions: [],
+  listenerNames: [],
+  dataSources: {
+    blockchain: {},
+    apis: {
+      allLiquidatableAccounts:
+        "https://protocol-api.aave.com/liquidations?get=uniswap",
+    },
+    graphql: {
+      endpoint: "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3",
+    },
+  },
+};
+
 export const clientConfigs = [
-  // dydxConfigs,
+  dydxConfigs,
   coingeckoConfigs,
-  // aaveMainnetConfigs,
-  // aaveKovanConfigs,
+  aaveMainnetConfigs,
   // sushiswapMainnet,
 ];

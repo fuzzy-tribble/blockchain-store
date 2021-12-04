@@ -9,12 +9,15 @@ import {
   IToken,
   Token,
   TokenPrice,
+  ITokenPrice,
   AccountReserve,
+  IAccountReserve,
 } from "../models";
 import {
   ClientFunctionResult,
   CollectionNames,
-  UpdateResult,
+  DatabaseUpdate,
+  DatabaseUpdateResult,
 } from "../lib/types";
 import Logger from "../lib/logger";
 
@@ -39,7 +42,7 @@ Schema.Types.String.checkRequired((v) => {
   return typeof v === "string";
 });
 
-export function updateValidation(updateObject, schemaObject) {
+export function customRequiredFieldsValidation(updateObject, schemaObject) {
   let requiredFields: string[] = [];
   Object.keys(schemaObject).forEach((key) => {
     if (schemaObject[key].required && schemaObject[key].default == undefined) {
@@ -103,7 +106,7 @@ export const validateMany = (
       res.invalidCount = res.invalidCount + 1;
       Logger.error({
         at: "_#validateMany",
-        message: `Validation failed for item: ${JSON.stringify(item)}`,
+        message: `Validation failed for item.`,
         error: err,
       });
     }
@@ -112,37 +115,54 @@ export const validateMany = (
 };
 
 export const updateDatabase = async (
-  fRes: ClientFunctionResult
-): Promise<UpdateResult> => {
-  let res: UpdateResult = {
-    upsertedCount: 0,
-    modifiedCount: 0,
-    invalidCount: 0,
-    upsertedIds: [],
-    modifiedIds: [],
-  };
-  switch (fRes.collection) {
-    case CollectionNames.ACCOUNTS:
-      res = await Account.addData(fRes.data);
-      break;
-    case CollectionNames.ACCOUNT_RESERVES:
-      res = await AccountReserve.addData(fRes.data);
-      break;
-    case CollectionNames.RESERVES:
-      res = await Reserve.addData(fRes.data);
-      break;
-    case CollectionNames.EVENTS:
-      res = await Event.addData(fRes.data);
-      break;
-    case CollectionNames.TOKENS:
-      res = await Token.addData(fRes.data);
-      break;
-    case CollectionNames.TOKEN_PRICES:
-      res = await TokenPrice.addData(fRes.data);
-      break;
-    default:
-      // TEST Collection or anything else
-      break;
+  dbUpdateList: DatabaseUpdate[]
+): Promise<{ success: boolean; results: DatabaseUpdateResult[] }> => {
+  let updateRes: DatabaseUpdateResult[] = [];
+  let success: boolean = true;
+
+  for (let i = 0; i >= dbUpdateList.length; i++) {
+    let collectionName = dbUpdateList[i].collectionName;
+    let data = dbUpdateList[i].data;
+    let res: DatabaseUpdateResult = {
+      upsertedCount: 0,
+      modifiedCount: 0,
+      invalidCount: 0,
+      upsertedIds: [],
+      modifiedIds: [],
+    };
+
+    switch (collectionName) {
+      case CollectionNames.ACCOUNTS:
+        res = await Account.addData(data as IAccount[]);
+        break;
+      case CollectionNames.ACCOUNT_RESERVES:
+        res = await AccountReserve.addData(data as IAccountReserve[]);
+        break;
+      case CollectionNames.RESERVES:
+        res = await Reserve.addData(data as IReserve[]);
+        break;
+      case CollectionNames.EVENTS:
+        res = await Event.addData(data as IEvent[]);
+        break;
+      case CollectionNames.TOKENS:
+        res = await Token.addData(data as IToken[]);
+        break;
+      case CollectionNames.TOKEN_PRICES:
+        res = await TokenPrice.addData(data as ITokenPrice[]);
+        break;
+      default:
+        res = {
+          upsertedCount: 0,
+          modifiedCount: 0,
+          invalidCount: 0,
+          upsertedIds: [],
+          modifiedIds: [],
+        };
+        break;
+    }
+    res.hasOwnProperty("errors") ? (success = false) : "";
+    // TODO - also check if any have invalid entries maybe?
+    updateRes.push(res);
   }
-  return res;
+  return { success: success, results: updateRes };
 };

@@ -1,31 +1,37 @@
 import Client from "../lib/client";
 import { apiRequest } from "../helpers/api-helpers";
-import { CollectionNames, IConfig, IReserve, Reserve } from "../models";
+import { IConfig, IReserve, Reserve } from "../models";
 import {
   SushiApiPair,
   formatPairingsFromApi,
 } from "./helpers/sushiswap-helpers";
-import { ClientFunctionResult } from "../lib/types";
+import { ClientFunctionResult, CollectionNames } from "../lib/types";
 
 export default class Sushiswap extends Client {
   constructor(conf: IConfig) {
     super(conf);
   }
 
-  addNewReserves = async (): Promise<ClientFunctionResult> => {
-    const reserves = await this._getReservesFromApi();
-    return {
-      status: false,
+  getReserves = async (): Promise<ClientFunctionResult> => {
+    let res: ClientFunctionResult = {
+      success: false,
       client: this.conf.client,
       network: this.conf.network,
       collection: CollectionNames.RESERVES,
-      data: reserves,
+      data: null,
     };
+    const reserves = await this._fetchReservesFromApi();
+    if (reserves) {
+      res.success = true;
+      res.data = reserves;
+    }
+    return res;
   };
 
   updateReservePriceData = async (): Promise<ClientFunctionResult> => {
+    // TODO - implement
     return {
-      status: false,
+      success: false,
       client: this.conf.client,
       network: this.conf.network,
       collection: CollectionNames.RESERVES,
@@ -33,7 +39,7 @@ export default class Sushiswap extends Client {
     };
   };
 
-  private _getReservesFromApi = async (): Promise<IReserve[]> => {
+  private _fetchReservesFromApi = async (): Promise<IReserve[] | null> => {
     const [res, pairings] = await apiRequest(
       this.conf.client,
       this.conf.dataSources.apis.GET_ALL_PAIRS

@@ -10,12 +10,11 @@ import {
 import { JsonRpcProvider, Listener } from "@ethersproject/providers";
 import { BlockTag } from "@ethersproject/abstract-provider";
 import { Interface } from "@ethersproject/abi";
-import { CollectionNames, Event, IConfig, updateDatabase } from "../models";
+import { IConfig } from "../models";
 
 import Logger from "../lib/logger";
-
-export type Network = "mainnet" | "kovan" | "rinkeby";
-export type Protocol = "aave" | "dydx" | "sushiswap";
+import { CollectionNames } from "../lib/types";
+import { updateDatabase } from "./db-helpers";
 export interface IToken {
   contract: string;
   symbol: string;
@@ -100,7 +99,7 @@ export default class Blockchain {
     eventFilter: EventFilter,
     fromBlock: BlockTag = -100,
     toBlock?: BlockTag
-  ): Promise<Event[]> => {
+  ): Promise<EthersEvent[]> => {
     Logger.info({
       client: this.clientConf.name,
       at: "Blockchain#query",
@@ -114,7 +113,7 @@ export default class Blockchain {
     // }
 
     try {
-      const networkEvents: Event[] = await this.contract.queryFilter(
+      const networkEvents: EthersEvent[] = await this.contract.queryFilter(
         eventFilter,
         fromBlock,
         toBlock
@@ -136,14 +135,16 @@ export default class Blockchain {
     }
   };
 
-  addListener = async (customEvent: string): Promise<Listener[]> => {
+  addListener = async (customEvent: string): Promise<boolean> => {
     // TODO - implement
+    let success = false;
     let filter = "";
     this.contract.on(filter, (eventResult) =>
       this._handleBlockchainListenerEvent(eventResult)
     );
     // Make sure its not a duplicate event that is subscribed to
-    return this.contract.listeners();
+    // this.contract.listeners();
+    return success;
   };
 
   removeListener = async (contractEvent: string) => {
@@ -151,16 +152,7 @@ export default class Blockchain {
     return this.contract.listeners();
   };
 
-  private _handleBlockchainListenerEvent = async (eventData: any) => {
-    // TODO - will need to parse event data
-    updateDatabase({
-      status: true,
-      client: this.clientConf.client,
-      network: this.clientConf.network,
-      collection: CollectionNames.EVENTS,
-      data: eventData,
-    });
-  };
+  private _handleBlockchainListenerEvent = async (eventData: any) => {};
 
   private _verifyNetworkConnection = async () => {
     try {

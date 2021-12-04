@@ -1,16 +1,16 @@
 import { FilterQuery, Document, model, Model, Schema, Query } from "mongoose";
 import {
   defaultSchemaOpts,
-  updateValidation,
+  customRequiredFieldsValidation,
   defaultQueryOptions,
 } from "../helpers/db-helpers";
 import Logger from "../lib/logger";
-import { ClientNames, NetworkNames, UpdateResult } from "../lib/types";
+import { ClientNames, DatabaseUpdateResult } from "../lib/types";
 import { IToken, Token, ITokenDoc } from "./token";
 export interface IReserve {
+  uid: string;
   client: ClientNames;
   network: string;
-  address: string;
   tokens: string[] | FilterQuery<ITokenDoc>[];
   liquidationThreshold?: number;
   [x: string]: any;
@@ -22,12 +22,11 @@ export interface IReserveDoc extends IReserve, Document {}
 enum PropertyNames {
   CLIENT = "client",
   NETWORK = "network",
-  ADDRESS = "address",
 }
 
 // MODEL DEFS //
 export interface IReserveModel extends Model<IReserveDoc> {
-  addData(reserves: IReserve[]): Promise<UpdateResult>;
+  addData(reserves: IReserve[]): Promise<DatabaseUpdateResult>;
   findByClientNetwork(
     client: ClientNames,
     network: string
@@ -59,7 +58,7 @@ const ReserveSchema = new Schema(ReserveSchemaFields, defaultSchemaOpts);
 ReserveSchema.index({ client: 1, network: 1, address: 1 }, { unique: true });
 
 ReserveSchema.pre(["updateOne"], function () {
-  updateValidation(this.getUpdate(), ReserveSchema.obj);
+  customRequiredFieldsValidation(this.getUpdate(), ReserveSchema.obj);
 });
 
 ReserveSchema.post(["findOneAndUpdate"], function (res) {
@@ -100,8 +99,8 @@ ReserveSchema.statics.findByClientNetwork = async function (
 
 ReserveSchema.statics.addData = async function (
   reserves: IReserve[]
-): Promise<UpdateResult> {
-  let updateRes: UpdateResult = {
+): Promise<DatabaseUpdateResult> {
+  let updateRes: DatabaseUpdateResult = {
     upsertedCount: 0,
     modifiedCount: 0,
     invalidCount: 0,

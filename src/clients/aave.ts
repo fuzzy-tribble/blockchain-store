@@ -2,9 +2,9 @@ import {
   IConfig,
   IAccount,
   IReserve,
-  CollectionNames,
   Config,
   IEvent,
+  AccountReserve,
 } from "../models";
 import Client from "../lib/client";
 import Blockchain from "../helpers/blockchain-helpers";
@@ -14,10 +14,18 @@ import {
   AaveGqlReserve,
   AaveUserConfiguration,
   AaveUserAccountData,
-  formatReservesFromGql,
-  parseAccountsFromBorrowTransactionLogs,
+} from "./helpers/aave-types";
+import {
+  ClientFunctionResult,
+  EventNames,
+  CollectionNames,
+  DatabaseUpdate,
+} from "../lib/types";
+import {
+  parseLiquidatableAccountReservesFromApi,
+  parseReservesFromGql,
 } from "./helpers/aave-helpers";
-import { ClientFunctionResult, EventNames } from "../lib/types";
+import { apiRequest } from "../helpers/api-helpers";
 export default class Aave extends Client {
   public bc: Blockchain;
   public gql: GqlClient;
@@ -31,78 +39,109 @@ export default class Aave extends Client {
     );
   }
 
-  addNewAccounts = async (): Promise<ClientFunctionResult> => {
-    const accounts = await this._getAccountsFromBlockchain();
-    return {
-      status: true,
+  checkLiquidatableAccountsApi = async (): Promise<ClientFunctionResult> => {
+    let res: ClientFunctionResult = {
+      success: false,
       client: this.conf.client,
       network: this.conf.network,
-      collection: CollectionNames.ACCOUNTS,
-      data: accounts,
+      data: [],
     };
-  };
-
-  getReserves = async (): Promise<ClientFunctionResult> => {
-    const reserves = await this._getReservesFromGql();
-    return {
-      status: true,
-      client: this.conf.client,
-      network: this.conf.network,
-      collection: CollectionNames.RESERVES,
-      data: reserves,
-    };
-  };
-
-  updateReservesPriceData = async (): Promise<ClientFunctionResult> => {
-    // update reserves if _isOld or _isRisky
-    // const reserves = await this._updateReservesFromApi();
-    return {
-      status: false,
-      client: this.conf.client,
-      network: this.conf.network,
-      collection: CollectionNames.RESERVES,
-      data: {},
-    };
-  };
-
-  handleEvent = async (event: IEvent) => {
-    switch (event.name) {
-      case EventNames.MAJOR_TOKEN_PRICE_CHANGE:
-        let accounts: IAccount[] = Account.findByClientNetworkToken();
-        this._updateAccountHealthScore(accounts);
-        break;
+    const liqAccounts = await this._fetchLiquidatableAccountReservesFromApi();
+    if (liqAccounts) {
+      res.success = true;
+      res.data = liqAccounts;
     }
-    // TODO - if client/network reserves have token
-    // TODO - update client account health scores with that token
+    return res;
   };
 
-  private _updateAccountsHealthScore = (accounts: IAccount[]) => {};
-  private _calculateAccountHealthFactor = (account: IAccount) => {
-    const userReserves = [{ totalCollateral: 39, totalBorrowed: 90 }];
-    let healthFactor = totalCollateral;
+  // findNewAccounts = async (): Promise<ClientFunctionResult> => {
+  //   let res: ClientFunctionResult = {
+  //     success: false,
+  //     client: this.conf.client,
+  //     network: this.conf.network,
+  //     collection: CollectionNames.ACCOUNTS,
+  //     data: null,
+  //   };
+  //   const accounts = await this._getAccountsFromBlockchain();
+  //   if (accounts) {
+  //     res.success = true;
+  //     res.data = accounts;
+  //   }
+  //   return res;
+  // };
+
+  updateReservesList = async (): Promise<ClientFunctionResult> => {
+    let res: ClientFunctionResult = {
+      success: false,
+      client: this.conf.client,
+      network: this.conf.network,
+      data: [],
+    };
+    const reserves = await this._fetchReservesListFromGql();
+    if (reserves) {
+      res.success = true;
+      res.data = reserves;
+    }
+    return res;
   };
 
-  private _getAccountsFromBlockchain = async (
-    toBlock: number | "latest" = "latest"
-  ): Promise<IAccount[]> => {
-    let newUsers: IAccount[] = [];
-    const latestBlockChecked: number = await Config.getLastBlockChecked(
-      this.conf.bcNetwork,
-      this.conf.bcProtocol
-    );
+  // updateReservesPriceData = async (): Promise<ClientFunctionResult> => {
+  //   // update reserves if _isOld or _isRisky
+  //   // const reserves = await this._updateReservesFromApi();
+  //   return {
+  //     success: false,
+  //     client: this.conf.client,
+  //     network: this.conf.network,
+  //     collection: CollectionNames.RESERVES,
+  //     data: {},
+  //   };
+  // };
 
-    let txEventLogs: Log[] = await this.bc.query(
-      this.conf.newUsersEventFilter,
-      latestBlockChecked,
-      toBlock
-    );
+  // handleEvent = async (event: IEvent) => {
+  //   switch (event.name) {
+  //     case EventNames.MAJOR_TOKEN_PRICE_CHANGE:
+  //       let accounts: IAccount[] = Account.findByClientNetworkToken();
+  //       this._updateAccountHealthScore(accounts);
+  //       break;
+  //   }
+  //   // TODO - if client/network reserves have token
+  //   // TODO - update client account health scores with that token
+  // };
 
-    newUsers = parseAccountsFromBorrowTransactionLogs(
-      this.conf.dataSources.blockchain.ifaceAbi,
-      txEventLogs
-    );
-    return newUsers;
+  private _fetchLiquidatableAccountReservesFromApi = async () => {
+    const { data } = await apiRequest(this.conf.client, {
+      method: "GET",
+      url: this.conf.dataSources.apis.liquidatableAccountReserves,
+    });
+    if (data) {
+      const parsedData = parseLiquidatableAccountReservesFromApi(data);
+      return parsedData;
+    } else {
+      return null;
+    }
   };
+
+  // private _getAccountsFromBlockchain = async (
+  //   toBlock: number | "latest" = "latest"
+  // ): Promise<IAccount[]> => {
+  //   let newUsers: IAccount[] = [];
+  //   const latestBlockChecked: number = await Config.getLastBlockChecked(
+  //     this.conf.bcNetwork,
+  //     this.conf.bcProtocol
+  //   );
+
+  //   let txEventLogs: Log[] = await this.bc.query(
+  //     this.conf.newUsersEventFilter,
+  //     latestBlockChecked,
+  //     toBlock
+  //   );
+
+  //   newUsers = parseAccountsFromBorrowTransactionLogs(
+  //     this.conf.dataSources.blockchain.ifaceAbi,
+  //     txEventLogs
+  //   );
+  //   return newUsers;
+  // };
 
   // private _updateAccountsFromBlockchain = async (activeUsers: IAccount[]) => {
   //   const promises = activeUsers.map(async (activeUser) => {
@@ -118,81 +157,75 @@ export default class Aave extends Client {
   //   return allUpdatedActiveUsers;
   // };
 
-  private _getReservesFromGql = async () => {
-    const {
-      data: { reserves },
-    }: any = await this.gql.query(
+  private _fetchReservesListFromGql = async (): Promise<
+    DatabaseUpdate[] | null
+  > => {
+    const res = await this.gql.query(
       this.conf.dataSources.graphql.queries.GET_RESERVES_LIST
     );
-    return formatReservesFromGql(
-      this.conf.client,
-      this.conf.network,
-      reserves as AaveGqlReserve[]
-    );
+    if (res) {
+      let parsedData = parseReservesFromGql(
+        this.conf.client,
+        this.conf.network,
+        res.data.reserves
+      );
+      return parsedData;
+    } else {
+      return null;
+    }
   };
 
-  private _updateReservesPricesFromApi = async (
-    reservesToUpdate: Array<IReserve>
-  ) => {
-    // TODO - stopped here (update most volatile reserves)
-  };
+  // private _updateActiveAccountData = async (
+  //   account: IAccount
+  // ): Promise<IAccount> => {
+  //   let updatedUserData: Record<string, any[]> = {
+  //     getUserAccountData: [],
+  //     getUserConfiguration: [],
+  //   };
+  //   let updatedUser: IAccount = {
+  //     address: account.address,
+  //     client: this.conf.client,
+  //     network: this.conf.network,
+  //     data: [],
+  //   };
 
-  private _updateActiveAccountData = async (
-    account: IAccount
-  ): Promise<IAccount> => {
-    let updatedUserData: Record<string, any[]> = {
-      getUserAccountData: [],
-      getUserConfiguration: [],
-    };
-    let updatedUser: IAccount = {
-      address: account.address,
-      client: this.conf.client,
-      network: this.conf.network,
-      data: [],
-    };
+  //   const clientFunctions = [
+  //     { name: "getUserAccountData", values: [account.address] },
+  //     { name: "getUserConfiguration", values: [account.address] },
+  //   ];
 
-    const clientFunctions = [
-      { name: "getUserAccountData", values: [account.address] },
-      { name: "getUserConfiguration", values: [account.address] },
-    ];
+  //   const promises = clientFunctions.map(async (f) => {
+  //     const txReq: TransactionRequest = {
+  //       to: this.conf.contractAddress,
+  //       data: this.bc.iface.encodeFunctionData(f.name, f.values),
+  //     };
+  //     const encodedRes = await this.bc.provider.call(txReq);
+  //     const decodedRes = this.bc.iface.decodeFunctionResult(f.name, encodedRes);
+  //     const res: AaveUserAccountData | AaveUserConfiguration = {
+  //       fName: f.name,
+  //       results: {
+  //         timestamp: Math.floor(Date.now()),
+  //         ...decodedRes,
+  //       },
+  //     };
+  //     return res;
+  //   });
 
-    const promises = clientFunctions.map(async (f) => {
-      const txReq: TransactionRequest = {
-        to: this.conf.contractAddress,
-        data: this.bc.iface.encodeFunctionData(f.name, f.values),
-      };
-      const encodedRes = await this.bc.provider.call(txReq);
-      const decodedRes = this.bc.iface.decodeFunctionResult(f.name, encodedRes);
-      const res: AaveUserAccountData | AaveUserConfiguration = {
-        fName: f.name,
-        results: {
-          timestamp: Math.floor(Date.now()),
-          ...decodedRes,
-        },
-      };
-      return res;
-    });
+  //   const allUpdatedUserData = await Promise.all(promises);
+  //   allUpdatedUserData.map((data) => {
+  //     let values = data.results as AaveUserAccountData;
+  //     if (data.fName == clientFunctions[0].name) {
+  //       updatedUserData.getUserAccountData.push(values);
+  //       // updatedUser.latestHealthScore = (values.healthFactor as any)._hex;
+  //     } else if (data.fName == clientFunctions[1].name) {
+  //       // TODO - parse this user configuration to asset type and amount
+  //       updatedUserData.getUserConfiguration.push(
+  //         values as AaveUserConfiguration
+  //       );
+  //     }
+  //   });
 
-    const allUpdatedUserData = await Promise.all(promises);
-    allUpdatedUserData.map((data) => {
-      let values = data.results as AaveUserAccountData;
-      if (data.fName == clientFunctions[0].name) {
-        updatedUserData.getUserAccountData.push(values);
-        // updatedUser.latestHealthScore = (values.healthFactor as any)._hex;
-      } else if (data.fName == clientFunctions[1].name) {
-        // TODO - parse this user configuration to asset type and amount
-        updatedUserData.getUserConfiguration.push(
-          values as AaveUserConfiguration
-        );
-      }
-    });
-
-    updatedUser.data = [updatedUserData];
-    return updatedUser;
-  };
-
-  private _handleMajorTokenPriceChange = async () => {
-    // TODO - update/calculate healthscores for accounts with collateral in that token
-    // TODO - emit EventNames.LIQUIDATABLE_ACCOUNT if any are found
-  };
+  //   updatedUser.data = [updatedUserData];
+  //   return updatedUser;
+  // };
 }

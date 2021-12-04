@@ -7,11 +7,11 @@ import {
   Schema,
 } from "mongoose";
 import Logger from "../lib/logger";
-import { ClientNames, UpdateResult } from "../lib/types";
+import { ClientNames, DatabaseUpdateResult } from "../lib/types";
 import {
   defaultQueryOptions,
   defaultSchemaOpts,
-  updateValidation,
+  customRequiredFieldsValidation,
 } from "../helpers/db-helpers";
 export interface IAccount {
   address: string;
@@ -39,7 +39,7 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface IAccountModel extends Model<IAccountDoc> {
-  addData(accounts: IAccount[]): Promise<UpdateResult>;
+  addData(accounts: IAccount[]): Promise<DatabaseUpdateResult>;
   findAccountsOlderThan(age: number): Promise<IAccountDoc[]>;
   propertyNames: typeof PropertyNames;
 }
@@ -69,7 +69,7 @@ const AccountSchema = new Schema(AccountSchemaFields, defaultSchemaOpts);
 AccountSchema.index({ client: 1, network: 1, address: 1 }, { unique: true });
 
 AccountSchema.pre(["updateOne"], function () {
-  updateValidation(this.getUpdate(), AccountSchema.obj);
+  customRequiredFieldsValidation(this.getUpdate(), AccountSchema.obj);
 });
 
 AccountSchema.post(["findOneAndUpdate"], function (res) {
@@ -81,8 +81,8 @@ AccountSchema.post(["findOneAndUpdate"], function (res) {
 
 AccountSchema.statics.addData = async function (
   accounts: IAccount[]
-): Promise<UpdateResult> {
-  let updateRes: UpdateResult = {
+): Promise<DatabaseUpdateResult> {
+  let updateRes: DatabaseUpdateResult = {
     upsertedCount: 0,
     modifiedCount: 0,
     invalidCount: 0,

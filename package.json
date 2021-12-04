@@ -9,7 +9,7 @@
     "start:dev": "TODO",
     "test:one": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register",
     "test:models": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register ./__test__/models/*.test.ts",
-    "test:libs": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register ./__test__/libs/*.test.ts",
+    "test:lib": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register ./__test__/lib/*.test.ts",
     "test:clients": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register ./__test__/clients/*.test.ts",
     "test:helpers": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register ./__test__/helpers/*.test.ts",
     "test:all": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register ./__test__/**/*.test.ts",

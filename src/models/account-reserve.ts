@@ -1,17 +1,17 @@
 import { Document, FilterQuery, model, Model, Schema } from "mongoose";
-import { IAccount, Account } from "./account";
-import { IReserve, Reserve } from "./reserve";
+import { IAccount, Account, IAccountDoc } from "./account";
+import { IReserve, Reserve, IReserveDoc } from "./reserve";
 import Logger from "../lib/logger";
-import { UpdateResult } from "../lib/types";
+import { DatabaseUpdateResult } from "../lib/types";
 import {
   defaultQueryOptions,
   defaultSchemaOpts,
-  updateValidation,
+  customRequiredFieldsValidation,
 } from "../helpers/db-helpers";
 
 export interface IAccountReserve {
-  account: string | IAccount;
-  reserve: string | IReserve;
+  account: string | FilterQuery<IAccountDoc>;
+  reserve: string | FilterQuery<IReserveDoc>;
   collateralizedByUser?: boolean;
   liquidationThreshold?: number;
   // currentTotalCollateral: number; // aToken in aave
@@ -28,7 +28,7 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface IAccountReserveModel extends Model<IAccountReserveDoc> {
-  addData(accountReserves: IAccountReserve[]): Promise<UpdateResult>;
+  addData(accountReserves: IAccountReserve[]): Promise<DatabaseUpdateResult>;
   propertyNames: typeof PropertyNames;
 }
 
@@ -47,7 +47,8 @@ const AccountReserveSchema = new Schema(
 AccountReserveSchema.index({ account: 1, reserve: 1 }, { unique: true });
 
 AccountReserveSchema.pre(["updateOne"], function () {
-  updateValidation(this.getUpdate(), AccountReserveSchema.obj);
+  customRequiredFieldsValidation(this.getUpdate(), AccountReserveSchema.obj);
+  // verify last update is newew
 });
 
 AccountReserveSchema.post(["findOneAndUpdate"], function (res) {
@@ -59,8 +60,8 @@ AccountReserveSchema.post(["findOneAndUpdate"], function (res) {
 
 AccountReserveSchema.statics.addData = async function (
   accountReserves: IAccountReserve[]
-): Promise<UpdateResult> {
-  let updateRes: UpdateResult = {
+): Promise<DatabaseUpdateResult> {
+  let updateRes: DatabaseUpdateResult = {
     upsertedCount: 0,
     modifiedCount: 0,
     invalidCount: 0,
@@ -124,7 +125,7 @@ AccountReserveSchema.statics.addData = async function (
 };
 
 const AccountReserve = model<IAccountReserveDoc, IAccountReserveModel>(
-  "account-reserves",
+  "accountReserves",
   AccountReserveSchema
 );
 

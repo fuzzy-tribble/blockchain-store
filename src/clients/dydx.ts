@@ -2,22 +2,51 @@ import { AxiosRequestConfig } from "axios";
 import { apiRequest } from "../helpers/api-helpers";
 import Client from "../lib/client";
 import { IAccount, IReserve } from "../models";
-import { ClientNames } from "../lib/types";
+import {
+  ClientFunctionResult,
+  ClientNames,
+  CollectionNames,
+} from "../lib/types";
 import {
   parseMarketsFromApi,
   parseAccountsFromApi,
 } from "./helpers/dydx-helpers";
 
 export default class DydxSolo extends Client {
-  getNewAccounts = async () => {
-    return await this._getLiquidatableAccountsFromApi();
+  checkForLiquidatableAccounts = async () => {
+    let res: ClientFunctionResult = {
+      success: false,
+      client: this.conf.client,
+      network: this.conf.network,
+      collection: CollectionNames.ACCOUNTS,
+      data: null,
+    };
+    const accounts = await this._getLiquidatableAccountsFromApi();
+    if (accounts) {
+      res.success = true;
+      res.data = accounts;
+    }
+    return res;
   };
 
   getNewReserves = async () => {
-    return await this._getMarketsFromApi();
+    let res: ClientFunctionResult = {
+      success: false,
+      client: this.conf.client,
+      network: this.conf.network,
+      collection: CollectionNames.RESERVES,
+      data: null,
+    };
+    const accounts = await this._getMarketsFromApi();
+    if (accounts) {
+      res.success = true;
+      res.data = accounts;
+    }
+    return res;
   };
 
-  _getLiquidatableAccountsFromApi = async (): Promise<IAccount[]> => {
+  _getLiquidatableAccountsFromApi = async (): Promise<IAccount[] | null> => {
+    // TODO - accounts url doesn't work...check it out
     let formattedAccounts: IAccount[] = [];
     const liquidatableAccountsRequest: AxiosRequestConfig = {
       url: `${this.conf.dataSources.apis.baseUrl}/v3/accounts`,
@@ -38,7 +67,7 @@ export default class DydxSolo extends Client {
     return formattedAccounts;
   };
 
-  _getMarketsFromApi = async (): Promise<IReserve[]> => {
+  _getMarketsFromApi = async (): Promise<IReserve[] | null> => {
     let formattedReserves: IReserve[] = [];
     const res = await apiRequest(this.conf.client, {
       url: this.conf.dataSources.apis.allMarkets,

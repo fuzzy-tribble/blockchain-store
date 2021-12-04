@@ -1,9 +1,9 @@
 import { Document, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
-import { ClientFunction, ClientNames, NetworkNames } from "../lib/types";
+import { ClientFunction, ClientNames } from "../lib/types";
 export interface IConfig {
   client: ClientNames;
-  network: NetworkNames;
+  network: string;
   pollFunctions: Array<ClientFunction>;
   listenerNames: Array<string>;
   dataSources: {
@@ -38,14 +38,11 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface IConfigModel extends Model<IConfigDoc> {
-  getLastBlockChecked(
-    client: ClientNames,
-    network: NetworkNames
-  ): Promise<number>;
+  getLastBlockChecked(client: ClientNames, network: string): Promise<number>;
   findAll(): Promise<IConfig[]>;
   findByClientNetwork(
     client: ClientNames,
-    network: NetworkNames
+    network: string
   ): Promise<IConfigDoc>;
   propertyNames: typeof PropertyNames;
 }
@@ -68,7 +65,7 @@ const ConfigSchema = new Schema(ConfigSchemaFields, schemaOpts);
 ConfigSchema.index({ client: 1, network: 1 }, { unique: true });
 ConfigSchema.statics.getLastBlockChecked = async function (
   client: ClientNames,
-  network: NetworkNames
+  network: string
 ): Promise<number> {
   // TODO - implement
   return 0;
@@ -91,7 +88,7 @@ ConfigSchema.statics.findAll = async function (): Promise<IConfig[]> {
 
 ConfigSchema.statics.findByClientNetwork = async function (
   client: ClientNames,
-  network: NetworkNames
+  network: string
 ): Promise<IConfig | null> {
   let conf: IConfig | null = null;
   try {

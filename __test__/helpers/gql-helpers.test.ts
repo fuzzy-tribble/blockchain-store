@@ -1,35 +1,20 @@
-import { gql } from "@apollo/client/core";
 import { expect } from "chai";
 import GqlClient from "../../src/helpers/graphql-helpers";
+import Logger from "../../src/lib/logger";
+import { mockGqlEndpoint, mockGqlQuery } from "../mockData";
 
-const mockQuery = gql`
-  query GetReserveData {
-    reserves(where: { usageAsCollateralEnabled: true }) {
-      id
-      name
-      price {
-        id
-      }
-      liquidityRate
-      variableBorrowRate
-      stableBorrowRate
-      symbol
-      decimals
-    }
-  }
-`;
-const sampleEndpoint =
-  "https://api.thegraph.com/subgraphs/name/aave/protocol-v2";
+// Silence logs while running tests
+Logger.transports.forEach((t) => (t.silent = true));
 
-describe("gql-helpers", () => {
+describe("Helpers: gql-helpers", () => {
   let gql: GqlClient;
 
   before(async () => {
-    gql = new GqlClient("aave", sampleEndpoint);
+    gql = new GqlClient("aave", mockGqlEndpoint);
   });
 
   it("should query", async () => {
-    const res = await gql.query(mockQuery);
+    const res = await gql.query(mockGqlQuery);
     expect(res?.data.reserves.length).to.be.greaterThan(1);
   });
 });

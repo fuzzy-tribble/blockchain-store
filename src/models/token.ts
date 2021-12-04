@@ -1,10 +1,10 @@
 import { Document, FilterQuery, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
-import { UpdateResult } from "../lib/types";
+import { DatabaseUpdateResult } from "../lib/types";
 import {
   defaultQueryOptions,
   defaultSchemaOpts,
-  updateValidation,
+  customRequiredFieldsValidation,
 } from "../helpers/db-helpers";
 export interface IToken {
   uid: string;
@@ -26,7 +26,7 @@ enum PropertyNames {
 
 // MODEL DEFS //
 export interface ITokenModel extends Model<ITokenDoc> {
-  addData(Tokens: IToken[]): Promise<UpdateResult>;
+  addData(Tokens: IToken[]): Promise<DatabaseUpdateResult>;
   propertyNames: typeof PropertyNames;
 }
 
@@ -46,7 +46,7 @@ const TokenSchema = new Schema(TokenSchemaFields, defaultSchemaOpts);
 TokenSchema.index({ uid: 1 }, { unique: true });
 
 TokenSchema.pre(["updateOne"], function () {
-  updateValidation(this.getUpdate(), TokenSchema.obj);
+  customRequiredFieldsValidation(this.getUpdate(), TokenSchema.obj);
 });
 
 // TokenSchema.post(["findOneAndUpdate"], function (res) {
@@ -58,8 +58,8 @@ TokenSchema.pre(["updateOne"], function () {
 
 TokenSchema.statics.addData = async function (
   tokens: IToken[]
-): Promise<UpdateResult> {
-  let updateRes: UpdateResult = {
+): Promise<DatabaseUpdateResult> {
+  let updateRes: DatabaseUpdateResult = {
     upsertedCount: 0,
     modifiedCount: 0,
     invalidCount: 0,

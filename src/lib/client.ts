@@ -8,11 +8,18 @@ import {
   ClientFunctionResult,
   ClientNames,
   CollectionNames,
-  UpdateResult,
+  DatabaseUpdateResult,
 } from "./types";
+
+interface PollCounter {
+  pending: boolean;
+  successCount: number;
+  failCount: number;
+}
+
 export default abstract class Client {
   public conf: IConfig;
-  public pollCounters: {};
+  public pollCounters: Record<string, PollCounter>;
   public running: boolean;
   // public eventSocket: EventSocket;
 
@@ -37,6 +44,11 @@ export default abstract class Client {
 
     // Start polls
     this.conf.pollFunctions.forEach((pollFunction) => {
+      this.pollCounters[pollFunction.name] = {
+        pending: false,
+        successCount: 0,
+        failCount: 0,
+      };
       this._poll(pollFunction);
     });
 
@@ -55,9 +67,30 @@ export default abstract class Client {
   private _poll = async (clientFunctionSig: ClientFunction): Promise<void> => {
     while (this.running) {
       try {
-        this._updatePollCounter(clientFunctionSig.name);
-        await this._executeFunctionByName(clientFunctionSig);
-        // TODO - handle execution return errors
+        if (this.pollCounters[clientFunctionSig.name].pending) {
+          throw new Error(
+            `Cannot execute poll function until previous poll for that function is complete: ${clientFunctionSig.name}`
+          );
+        } else {
+          this.pollCounters[clientFunctionSig.name].pending = true;
+          Logger.info({
+            at: `${this.conf.client}#_poll(${clientFunctionSig.name})`,
+            message: "Executing poll function...",
+            pollCount: this.pollCounters[clientFunctionSig.name],
+          });
+          let success = await this._executeFunctionByName(clientFunctionSig);
+          this.pollCounters[clientFunctionSig.name].pending = false;
+          if (success) {
+            this.pollCounters[clientFunctionSig.name].successCount++;
+          } else {
+            this.pollCounters[clientFunctionSig.name].failCount++;
+          }
+          Logger.info({
+            at: `${this.conf.client}#_poll(${clientFunctionSig.name})`,
+            message: `Done executing poll function.`,
+            pollCount: this.pollCounters[clientFunctionSig.name],
+          });
+        }
       } catch (error) {
         Logger.error({
           at: `${this.conf.client}#_poll(${clientFunctionSig.name})`,
@@ -70,54 +103,46 @@ export default abstract class Client {
     }
   };
 
-  private _updatePollCounter = (fName: string) => {
-    fName in this.pollCounters
-      ? this.pollCounters[fName]++
-      : (this.pollCounters[fName] = 0);
-  };
-
   private _addListener = async (listenerName: string) => {
     // TODO
   };
 
   private _executeFunctionByName = async (
     clientFunctionSig: ClientFunction
-  ): Promise<any[]> => {
+  ): Promise<boolean> => {
     let functionResult: ClientFunctionResult = {
       success: false,
       client: this.conf.client,
       network: this.conf.network,
-      collection: CollectionNames.TEST,
-      data: undefined,
+      data: [],
     };
-    let databaseResult: UpdateResult = {
-      upsertedCount: 0,
-      modifiedCount: 0,
-      invalidCount: 0,
-      upsertedIds: [],
-      modifiedIds: [],
-    };
+    let dbSuccess = false;
     try {
-      Logger.info({
-        at: `${this.conf.client}#_execute(${clientFunctionSig.name})`,
-        message: "Executing function...",
-        pollCount: this.pollCounters[clientFunctionSig.name],
-      });
       functionResult = await this[clientFunctionSig.name].call(
         clientFunctionSig.args
       );
-      if (functionResult.success) {
-        databaseResult = await updateDatabase(functionResult);
+      if (functionResult.success && functionResult.data.length > 0) {
+        let databaseResult = await updateDatabase(functionResult.data);
+        if (databaseResult.success) {
+          dbSuccess = true;
+        } else {
+          Logger.debug({
+            at: `${this.conf.client}#_execute(${clientFunctionSig.name})`,
+            message: `Database errors.`,
+            databaseUpdateResult: databaseResult,
+          });
+        }
+      } else {
+        Logger.debug({
+          at: `${this.conf.client}#_execute(${clientFunctionSig.name})`,
+          message: `Client function failed. Not running updateDatabase`,
+          clientFunctionResult: functionResult,
+        });
       }
-      Logger.info({
-        at: `${this.conf.client}#_execute(${clientFunctionSig.name})`,
-        message: `Done executing.`,
-        pollCount: this.pollCounters[clientFunctionSig.name],
-      });
     } catch (err) {
       Logger.error({
         at: `${this.conf.client}#_execute(${clientFunctionSig.name})`,
-        message: `Error while executing function.`,
+        message: `Error while executing poll function.`,
         error: err,
         pollCount: this.pollCounters[clientFunctionSig.name],
       });
@@ -125,10 +150,10 @@ export default abstract class Client {
       Logger.debug({
         at: `${this.conf.client}#_execute(${clientFunctionSig.name})`,
         message: `Execution result.`,
-        clientFunctionResult: `Client function execution success = ${functionResult.success}`,
-        databaseUpdateResult: `Database update: nUpserted: ${databaseResult.upsertedCount}, nModified: ${databaseResult.modifiedCount}, nInvalid: ${databaseResult.invalidCount}`,
+        clientFunctionResult: `Client function execution success: ${functionResult.success}`,
+        databaseUpdateResult: `Database updated without any errors: ${dbSuccess}`,
       });
-      return [functionResult, databaseResult];
+      return functionResult.success && dbSuccess;
     }
   };
 }

@@ -80,8 +80,12 @@ describe("Client: dydx", () => {
       return expect(dydx.getNewReserves()).to.eventually.be.not.empty;
     });
 
-    it("should fetch ACCOUNTS from api", () => {
-      return expect(dydx.getNewAccounts()).to.eventually.not.be.empty;
-    });
+    // it("should fetch ACCOUNTS from api", () => {
+    //   return expect(dydx.getNewAccounts()).to.eventually.not.be.empty;
+    // });
+  });
+
+  describe("Poll functions", () => {
+    // TODO - implement
   });
 });

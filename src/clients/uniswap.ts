@@ -1,40 +1,45 @@
-import {
-  graphql,
-  GraphQLArgs,
-  GraphQLObjectType,
-  GraphQLSchema,
-  GraphQLString,
-} from "graphql";
+import Client from "../lib/client";
 
-const schema = new GraphQLSchema({
-  query: new GraphQLObjectType({
-    name: "RootQueryType",
-    fields: {
-      hello: {
-        type: GraphQLString,
-        resolve() {
-          return "world";
-        },
-      },
-    },
-  }),
-});
+// TODO - get data from gql, etc
+export default class Uniswap extends Client {}
 
-var query = "{ hello }";
+// import {
+//   graphql,
+//   GraphQLArgs,
+//   GraphQLObjectType,
+//   GraphQLSchema,
+//   GraphQLString,
+// } from "graphql";
 
-const args: GraphQLArgs = {
-  schema: schema,
-  source: query,
-};
+// const schema = new GraphQLSchema({
+//   query: new GraphQLObjectType({
+//     name: "RootQueryType",
+//     fields: {
+//       hello: {
+//         type: GraphQLString,
+//         resolve() {
+//           return "world";
+//         },
+//       },
+//     },
+//   }),
+// });
 
-graphql(args).then(console.log);
+// var query = "{ hello }";
 
-const endpoint = "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3";
+// const args: GraphQLArgs = {
+//   schema: schema,
+//   source: query,
+// };
 
-const query = `{
-  tokens {
-    symbol
-    name
-    decimals
-  }
-}`;
+// graphql(args).then(console.log);
+
+// const endpoint = "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3";
+
+// const query = `{
+//   tokens {
+//     symbol
+//     name
+//     decimals
+//   }
+// }`;

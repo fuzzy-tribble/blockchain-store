@@ -1,0 +1,414 @@
+{
+  "accounts": [
+    {
+      "address": "0x61c4458fbe4da898a498f50434076a7100b5f2c1",
+      "block_updated": null,
+      "health": {
+        "value": "1.99932927182682274843310459507550165256122331687486576582722274608186958221914"
+      },
+      "tokens": [
+        {
+          "address": "0x39aa39c021dfbae8fac545936693ac917d5e7563",
+          "borrow_balance_underlying": { "value": "20133.16921535351" },
+          "lifetime_borrow_interest_accrued": { "value": "133.16921535351" },
+          "lifetime_supply_interest_accrued": { "value": "0.0" },
+          "safe_withdraw_amount_underlying": { "value": "0.0" },
+          "supply_balance_underlying": { "value": "0.0" },
+          "symbol": "cUSDC"
+        },
+        {
+          "address": "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5",
+          "borrow_balance_underlying": { "value": "0" },
+          "lifetime_borrow_interest_accrued": { "value": "0" },
+          "lifetime_supply_interest_accrued": { "value": "0.000998664973878" },
+          "safe_withdraw_amount_underlying": {
+            "value": "4.497858215521827499323492989"
+          },
+          "supply_balance_underlying": { "value": "12.000998664973878" },
+          "symbol": "cETH"
+        }
+      ],
+      "total_borrow_value_in_eth": { "value": "4.501884269671230337336625392" },
+      "total_collateral_value_in_eth": {
+        "value": "9.000748998730408684997645814"
+      }
+    },
+    {
+      "address": "0xb46d0e52e8cc8ad97f642fff3b4715225b35e480",
+      "block_updated": null,
+      "health": {
+        "value": "1.99925268291522045305056943136218252661939121561588682533678722065728455277740"
+      },
+      "tokens": [
+        {
+          "address": "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9",
+          "borrow_balance_underlying": { "value": "10532.983070498634" },
+          "lifetime_borrow_interest_accrued": { "value": "147.837772498634" },
+          "lifetime_supply_interest_accrued": { "value": "0.0" },
+          "safe_withdraw_amount_underlying": { "value": "0.0" },
+          "supply_balance_underlying": { "value": "0.0" },
+          "symbol": "cUSDT"
+        },
+        {
+          "address": "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5",
+          "borrow_balance_underlying": { "value": "0" },
+          "lifetime_borrow_interest_accrued": { "value": "0" },
+          "lifetime_supply_interest_accrued": { "value": "0.0001441907417042" },
+          "safe_withdraw_amount_underlying": { "value": "1.1551441907417042" },
+          "supply_balance_underlying": { "value": "1.1551441907417042" },
+          "symbol": "cETH"
+        },
+        {
+          "address": "0xccf4429db6322d5c611ee964527d42e5d685dd6a",
+          "borrow_balance_underlying": { "value": "0" },
+          "lifetime_borrow_interest_accrued": { "value": "0" },
+          "lifetime_supply_interest_accrued": {
+            "value": "0.00028666072069706"
+          },
+          "safe_withdraw_amount_underlying": {
+            "value": "0.1917396978963687337472542847"
+          },
+          "supply_balance_underlying": { "value": "0.41749036072069706" },
+          "symbol": "cWBTC2"
+        }
+      ],
+      "total_borrow_value_in_eth": { "value": "2.355231324516465364772617319" },
+      "total_collateral_value_in_eth": {
+        "value": "4.708702544425511613544615641"
+      }
+    },
+    {
+      "address": "0x237a6d794bce99e61d1226f2203ee2dc727a235d",
+      "block_updated": null,
+      "health": {
+        "value": "1.99742752634196279851626321700084267786409587556099961326585979999655007401559"
+      },
+      "tokens": [
+        {
+          "address": "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9",
+          "borrow_balance_underlying": { "value": "1511.4154371259576" },
+          "lifetime_borrow_interest_accrued": { "value": "11.4154371259576" },
+          "lifetime_supply_interest_accrued": { "value": "0.0" },
+          "safe_withdraw_amount_underlying": { "value": "0.0" },
+          "supply_balance_underlying": { "value": "0.0" },
+          "symbol": "cUSDT"
+        },
+        {
+          "address": "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5",
+          "borrow_balance_underlying": { "value": "0" },
+          "lifetime_borrow_interest_accrued": { "value": "0" },
+          "lifetime_supply_interest_accrued": { "value": "0.0000689987300341" },
+          "safe_withdraw_amount_underlying": {
+            "value": "0.3368013789666294650717605114"
+          },
+          "supply_balance_underlying": { "value": "0.9000689987300341" },
+          "symbol": "cETH"
+        }
+      ],
+      "total_borrow_value_in_eth": {
+        "value": "0.3379605718580428065105429786"
+      },
+      "total_collateral_value_in_eth": {
+        "value": "0.6750517490475256091511835435"
+      }
+    },
+    {
+      "address": "0x7d1d311ee3b0624dad392147eb7a397d4007efda",
+      "block_updated": null,
+      "health": {
+        "value": "1.99736186669090003077576841622584268747349281584280185421055846075602146199026"
+      },
+      "tokens": [
+        {
+          "address": "0x35a18000230da775cac24873d00ff85bccded550",
+          "borrow_balance_underlying": { "value": "0" },
+          "lifetime_borrow_interest_accrued": { "value": "0" },
+          "lifetime_supply_interest_accrued": { "value": "5.15064250397845" },
+          "safe_withdraw_amount_underlying": {
+            "value": "186.9504639046906245120557583"
+          },
+          "supply_balance_underlying": { "value": "499.63443976174875" },
+          "symbol": "cUNI"
+        },
+        {
+          "address": "0x39aa39c021dfbae8fac545936693ac917d5e7563",
+          "borrow_balance_underlying": { "value": "3849.1518499239305" },
+          "lifetime_borrow_interest_accrued": { "value": "176.9054139239305" },
+          "lifetime_supply_interest_accrued": { "value": "0.0" },
+          "safe_withdraw_amount_underlying": { "value": "0.0" },
+          "supply_balance_underlying": { "value": "0.0" },
+          "symbol": "cUSDC"
+        }
+      ],
+      "total_borrow_value_in_eth": {
+        "value": "0.8606909314373532308407648001"
+      },
+      "total_collateral_value_in_eth": {
+        "value": "1.719111245459641302271730861"
+      }
+    },
+    {
+      "address": "0xe8e415a30140ada0942fd45ef5009bc6fad0a8fa",
+      "block_updated": null,
+      "health": {
+        "value": "1.99721640880973126113132011027603702102570112602245001207253087328082905825956"
+      },
+      "tokens": [
+        {
+          "address": "0x39aa39c021dfbae8fac545936693ac917d5e7563",
+          "borrow_balance_underlying": { "value": "35253.093760763804" },
+          "lifetime_borrow_interest_accrued": { "value": "471.939817763804" },
+          "lifetime_supply_interest_accrued": { "value": "0.0" },
+          "safe_withdraw_amount_underlying": { "value": "0.0" },
+          "supply_balance_underlying": { "value": "0.0" },
+          "symbol": "cUSDC"
+        },
+        {
+          "address": "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5",
+          "borrow_balance_underlying": { "value": "0" },
+          "lifetime_borrow_interest_accrued": { "value": "0" },
+          "lifetime_supply_interest_accrued": { "value": "0.006253100634322" },
+          "safe_withdraw_amount_underlying": {
+            "value": "7.853523646568569712419040461"
+          },
+          "supply_balance_underlying": { "value": "20.991490696634322" },
+          "symbol": "cETH"
+        }
+      ],
+      "total_borrow_value_in_eth": { "value": "7.882780230039452219255948309" },
+      "total_collateral_value_in_eth": {
+        "value": "15.74361802247574203652087681"
+      }
+    },
+    {
+      "address": "0xd1b8c856d3cd5a5236562abaaadd3401e652de31",
+      "block_updated": null,
+      "health": {
+        "value": "1.99653889303070675961285255831306611023276581849657317264527332023765676124561"
+      },
+      "tokens": [
+        {
+          "address": "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5",
+          "borrow_balance_underlying": { "value": "0" },
+          "lifetime_borrow_interest_accrued": { "value": "0" },
+          "lifetime_supply_interest_accrued": { "value": "0.0009264484377551" },
+          "safe_withdraw_amount_underlying": {
+            "value": "0.5675148828211730927803032963"
+          },
+          "supply_balance_underlying": { "value": "1.5177582126047795" },
+          "symbol": "cETH"
+        },
+        {
+          "address": "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9",
+          "borrow_balance_underlying": { "value": "2549.7869702934154" },
+          "lifetime_borrow_interest_accrued": { "value": "49.7869702934154" },
+          "lifetime_supply_interest_accrued": { "value": "0.0" },
+          "safe_withdraw_amount_underlying": { "value": "0.0" },
+          "supply_balance_underlying": { "value": "0.0" },
+          "symbol": "cUSDT"
+        }
+      ],
+      "total_borrow_value_in_eth": {
+        "value": "0.5701459978701638535214278741"
+      },
+      "total_collateral_value_in_eth": {
+        "value": "1.138318659453584633939114828"
+      }
+    },
+    {
+      "address": "0x0845b04785b1fc11e0cf9012cba4feab6726a663",
+      "block_updated": null,
+      "health": {
+        "value": "1.99566495090654986679935593605925125203606784137965267036242165244672684929857"
+      },
+      "tokens": [
+        {
+          "address": "0x70e36f6bf80a52b3b46b3af8e106cc0ed743e8e4",
+          "borrow_balance_underlying": { "value": "0" },
+          "lifetime_borrow_interest_accrued": { "value": "0" },
+          "lifetime_supply_interest_accrued": { "value": "0.0908445857076754" },
+          "safe_withdraw_amount_underlying": { "value": "0.0" },
+          "supply_balance_underlying": { "value": "0.0" },
+          "symbol": "cCOMP"
+        },
+        {
+          "address": "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5",
+          "borrow_balance_underlying": { "value": "0" },
+          "lifetime_borrow_interest_accrued": { "value": "0" },
+          "lifetime_supply_interest_accrued": { "value": "0.07900908408800" },
+          "safe_withdraw_amount_underlying": {
+            "value": "27.45446006775306099178573902"
+          },
+          "supply_balance_underlying": { "value": "73.47791207923459" },
+          "symbol": "cETH"
+        },
+        {
+          "address": "0x39aa39c021dfbae8fac545936693ac917d5e7563",
+          "borrow_balance_underlying": { "value": "123494.68245520159" },
+          "lifetime_borrow_interest_accrued": { "value": "3941.05399720159" },
+          "lifetime_supply_interest_accrued": { "value": "0.0" },
+          "safe_withdraw_amount_underlying": { "value": "0.0" },
+          "supply_balance_underlying": { "value": "0.0" },
+          "symbol": "cUSDC"
+        }
+      ],
+      "total_borrow_value_in_eth": { "value": "27.61407120688891757886568743" },
+      "total_collateral_value_in_eth": {
+        "value": "55.10843405942594392997419141"
+      }
+    },
+    {
+      "address": "0xb7017de2b0eec49ff3a370fb6d40cd97e6d9cff7",
+      "block_updated": null,
+      "health": {
+        "value": "1.99559260766408150499564704976798694676364735327071949435606495420295298999560"
+      },
+      "tokens": [
+        {
+          "address": "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5",
+          "borrow_balance_underlying": { "value": "0" },
+          "lifetime_borrow_interest_accrued": { "value": "0" },
+          "lifetime_supply_interest_accrued": {
+            "value": "0.000013011360397055"
+          },
+          "safe_withdraw_amount_underlying": {
+            "value": "0.003741057726147912384971260886"
+          },
+          "supply_balance_underlying": { "value": "0.010013011216051282" },
+          "symbol": "cETH"
+        },
+        {
+          "address": "0x6c8c6b02e7b2be14d4fa6022dfd6d75921d90e4e",
+          "borrow_balance_underlying": { "value": "16.195894505375524" },
+          "lifetime_borrow_interest_accrued": { "value": "1.032258314187910" },
+          "lifetime_supply_interest_accrued": { "value": "0.0" },
+          "safe_withdraw_amount_underlying": { "value": "0.0" },
+          "supply_balance_underlying": { "value": "0.0" },
+          "symbol": "cBAT"
+        }
+      ],
+      "total_borrow_value_in_eth": {
+        "value": "0.003763172093942021875203420125"
+      },
+      "total_collateral_value_in_eth": {
+        "value": "0.007509758412038461328490860192"
+      }
+    },
+    {
+      "address": "0xf549f08e0a1f57d2b4a39573a11c2e1d380a2c75",
+      "block_updated": null,
+      "health": {
+        "value": "1.99435403016927314890163022554653178624521978734638396772668495199199216356246"
+      },
+      "tokens": [
+        {
+          "address": "0x6c8c6b02e7b2be14d4fa6022dfd6d75921d90e4e",
+          "borrow_balance_underlying": { "value": "24538.438211469143" },
+          "lifetime_borrow_interest_accrued": { "value": "538.438211469143" },
+          "lifetime_supply_interest_accrued": { "value": "35.583100075664" },
+          "safe_withdraw_amount_underlying": { "value": "24114.528684215664" },
+          "supply_balance_underlying": { "value": "24114.528684215664" },
+          "symbol": "cBAT"
+        },
+        {
+          "address": "0x39aa39c021dfbae8fac545936693ac917d5e7563",
+          "borrow_balance_underlying": { "value": "0.0" },
+          "lifetime_borrow_interest_accrued": { "value": "179.80993" },
+          "lifetime_supply_interest_accrued": { "value": "0.0" },
+          "safe_withdraw_amount_underlying": { "value": "0.0" },
+          "supply_balance_underlying": { "value": "0.0" },
+          "symbol": "cUSDC"
+        },
+        {
+          "address": "0xface851a4921ce59e912d19329929ce6da6eb0c7",
+          "borrow_balance_underlying": { "value": "735.632846318149" },
+          "lifetime_borrow_interest_accrued": { "value": "14.8743381358541" },
+          "lifetime_supply_interest_accrued": {
+            "value": "0.1677206315720612496"
+          },
+          "safe_withdraw_amount_underlying": {
+            "value": "0.0012396375541156696"
+          },
+          "supply_balance_underlying": { "value": "0.0012396375541156696" },
+          "symbol": "cLINK"
+        },
+        {
+          "address": "0xccf4429db6322d5c611ee964527d42e5d685dd6a",
+          "borrow_balance_underlying": { "value": "1.972000163324464" },
+          "lifetime_borrow_interest_accrued": { "value": "0.024000163324464" },
+          "lifetime_supply_interest_accrued": { "value": "0.0" },
+          "safe_withdraw_amount_underlying": { "value": "0.0" },
+          "supply_balance_underlying": { "value": "0.0" },
+          "symbol": "cWBTC2"
+        },
+        {
+          "address": "0x35a18000230da775cac24873d00ff85bccded550",
+          "borrow_balance_underlying": { "value": "0.0" },
+          "lifetime_borrow_interest_accrued": { "value": "0.289385111909058" },
+          "lifetime_supply_interest_accrued": { "value": "0.0" },
+          "safe_withdraw_amount_underlying": { "value": "0.0" },
+          "supply_balance_underlying": { "value": "0.0" },
+          "symbol": "cUNI"
+        },
+        {
+          "address": "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5",
+          "borrow_balance_underlying": { "value": "0" },
+          "lifetime_borrow_interest_accrued": { "value": "0" },
+          "lifetime_supply_interest_accrued": { "value": "0.04055755438013" },
+          "safe_withdraw_amount_underlying": {
+            "value": "38.62866041178137686372539887"
+          },
+          "supply_balance_underlying": { "value": "98.64207473350086" },
+          "symbol": "cETH"
+        }
+      ],
+      "total_borrow_value_in_eth": { "value": "38.92166111097382301159753840" },
+      "total_collateral_value_in_eth": {
+        "value": "77.62357169755331328442294990"
+      }
+    },
+    {
+      "address": "0x112bb5dd677ec044f24c045db1a0ab3b167841ea",
+      "block_updated": null,
+      "health": {
+        "value": "1.9942516308036252951911497387292564524809022117667433443020518049839959506626"
+      },
+      "tokens": [
+        {
+          "address": "0x4b0181102a0112a2ef11abee5563bb4a3176c9d7",
+          "borrow_balance_underlying": { "value": "2.0081918658210984" },
+          "lifetime_borrow_interest_accrued": { "value": "0.0081918658210984" },
+          "lifetime_supply_interest_accrued": { "value": "0.012099758450752" },
+          "safe_withdraw_amount_underlying": {
+            "value": "3.736500177759819215928014139"
+          },
+          "supply_balance_underlying": { "value": "10.012099758450752" },
+          "symbol": "cSUSHI"
+        }
+      ],
+      "total_borrow_value_in_eth": {
+        "value": "0.005595068766397626927797292110"
+      },
+      "total_collateral_value_in_eth": {
+        "value": "0.01115797501184689551790271706"
+      }
+    }
+  ],
+  "error": null,
+  "pagination_summary": {
+    "page_number": 1,
+    "page_size": 10,
+    "total_entries": 2594,
+    "total_pages": 260
+  },
+  "request": {
+    "addresses": [],
+    "block_number": 0,
+    "block_timestamp": 0,
+    "max_health": { "value": "2.0" },
+    "min_borrow_value_in_eth": { "value": "0.002" },
+    "network": "mainnet",
+    "page_number": 1,
+    "page_size": 10
+  }
+}
