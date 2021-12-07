@@ -14,9 +14,16 @@ import {
   CollectionNames,
   DatabaseUpdate,
 } from "../../lib/types";
-import { IAccount, IReserve, IToken, ITokenPrice } from "../../models";
+import {
+  IAccount,
+  IAccountReserve,
+  IReserve,
+  IToken,
+  ITokenPrice,
+  Reserve,
+} from "../../models";
 import { ITokenDoc } from "../../models/token";
-import { AaveApiAccountReserves, AaveGqlReserve } from "./aave-types";
+import { AaveApiAccountReserve, AaveGqlReserve } from "./aave-types";
 
 // https://github.com/aave/aave-js/blob/58feb26dbbc81e410738a962342d8cab5376b660/src/tx-builder/types/index.ts
 
@@ -44,7 +51,7 @@ export const parseReservesFromGql = (
 
     let parsedTokenPrice: ITokenPrice = {
       address: reserve.price.id,
-      lastUpdated: reserve.price.lastUpdatedTimestamp.toString(),
+      lastUpdated: reserve.price.lastUpdateTimestamp.toString(),
       priceInEth: reserve.price.priceInEth,
       source: reserve.price.priceSource,
       type: reserve.price.type,
@@ -80,9 +87,80 @@ export const parseReservesFromGql = (
 };
 
 export const parseLiquidatableAccountReservesFromApi = (
-  accountReserves: AaveApiAccountReserves[]
-): Promise<DatabaseUpdate[]> => {
-  throw new Error("implement me");
+  client: ClientNames,
+  network: string,
+  accountReserves: AaveApiAccountReserve[]
+): DatabaseUpdate[] => {
+  let parsedTokens: IToken[] = [];
+  let parsedReserves: IReserve[] = [];
+  let parsedAccountReserves: IAccountReserve[] = [];
+  let parsedAccounts: IAccount[] = [];
+
+  accountReserves.forEach((accountReserve) => {
+    if (accountReserve.user.hasOwnProperty("reservesData")) {
+      accountReserve.user.reservesData.forEach((reserveData) => {
+        // GET TOKEN DATA
+        let parsedToken: IToken = {
+          uid: reserveData.reserve.aToken.id,
+          __typename: reserveData.reserve.aToken.__typename,
+          platforms: {
+            ethereum: reserveData.reserve.aToken.id,
+          },
+        };
+        parsedTokens.push(parsedToken);
+        delete (reserveData as any).reserve.aToken;
+
+        let parsedReserve: IReserve = {
+          ...reserveData.reserve,
+          uid: reserveData.reserve.id,
+          client: client,
+          network: network,
+          tokens: [parsedToken.uid],
+        };
+        parsedReserves.push(parsedReserve);
+        delete (reserveData as any).reserve;
+
+        let parsedAccountReserve: IAccountReserve = {
+          ...reserveData,
+          reserve: parsedReserve.uid,
+          account: accountReserve.user.id,
+        };
+        parsedAccountReserves.push(parsedAccountReserve);
+      });
+    }
+    let userId = accountReserve.user.id;
+    delete (accountReserve as any).reserve;
+    delete (accountReserve as any).user.reservesData;
+    delete (accountReserve as any).user.id;
+    let userData = accountReserve.user;
+    delete (accountReserve as any).user;
+    let parsedAccount: IAccount = {
+      ...userData,
+      ...accountReserve,
+      address: userId,
+      client: client,
+      network: network,
+    };
+    parsedAccounts.push(parsedAccount);
+  });
+  return [
+    {
+      collectionName: CollectionNames.TOKENS,
+      data: parsedTokens,
+    },
+    {
+      collectionName: CollectionNames.RESERVES,
+      data: parsedReserves,
+    },
+    {
+      collectionName: CollectionNames.ACCOUNT_RESERVES,
+      data: parsedAccountReserves,
+    },
+    {
+      collectionName: CollectionNames.ACCOUNTS,
+      data: parsedAccounts,
+    },
+  ];
 };
 
 // export const parseAccountsFromBorrowTransactionLogs = (

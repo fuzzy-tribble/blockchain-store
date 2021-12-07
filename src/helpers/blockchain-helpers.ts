@@ -13,8 +13,9 @@ import { Interface } from "@ethersproject/abi";
 import { IConfig } from "../models";
 
 import Logger from "../lib/logger";
-import { CollectionNames } from "../lib/types";
+import { ClientNames, CollectionNames } from "../lib/types";
 import { updateDatabase } from "./db-helpers";
+import { IBlockchainConf } from "../models/config";
 export interface IToken {
   contract: string;
   symbol: string;
@@ -44,31 +45,35 @@ export interface ILiquidityPair {
 
 // TODO - consider implement auto-chunking for large queries
 export default class Blockchain {
-  public clientConf: IConfig;
+  public client: ClientNames;
+  public network: string;
+  public bcConf: IBlockchainConf;
   public provider: JsonRpcProvider;
   public signer: Signer;
   public contract: Contract;
   public iface: Interface;
 
   constructor(conf: IConfig) {
-    this.clientConf = conf;
-    this.provider = new ethers.providers.JsonRpcProvider(
-      this.clientConf.rpcUrl
-    );
+    this.client = conf.client;
+    this.network = conf.network;
+    if (!conf.dataSources.blockchain)
+      throw new Error("Blockchain conf must be present in confs provided.");
+    this.bcConf = conf.dataSources.blockchain;
+    this.provider = new ethers.providers.JsonRpcProvider(this.bcConf.rpcUrl);
     this.signer = this.provider.getSigner();
     this.contract = new ethers.Contract(
-      this.clientConf.contractAddress,
-      this.clientConf.contractAbi as string,
+      this.bcConf.contractAddress,
+      this.bcConf.contractAbi as string,
       this.provider
     );
-    this.iface = new Interface(this.clientConf.ifaceAbi as string);
+    this.iface = new Interface(this.bcConf.ifaceAbi as string);
   }
 
   connect = async (): Promise<boolean> => {
     Logger.info({
-      client: this.clientConf.name,
+      client: this.client,
       at: "Blockchain#connect",
-      message: `Connecting to blockchain network at: ${this.clientConf.rpcUrl}`,
+      message: `Connecting to blockchain network at: ${this.bcConf.rpcUrl}`,
     });
 
     return await this._verifyNetworkConnection();
@@ -78,15 +83,15 @@ export default class Blockchain {
     try {
       await this._verifyNetworkConnection();
       Logger.info({
-        client: this.clientConf.name,
+        client: this.client,
         at: "Blockchain#getLatestBlock",
-        message: `Connecting to blockchain network at: ${this.clientConf.rpcUrl}`,
+        message: `Connecting to blockchain network at: ${this.bcConf.rpcUrl}`,
       });
 
       return await this.provider.getBlockNumber();
     } catch (err) {
       Logger.error({
-        client: this.clientConf.name,
+        client: this.client,
         at: "Blockchain#getLatestBlock",
         message: "Coun't get latest block.",
         error: err,
@@ -101,7 +106,7 @@ export default class Blockchain {
     toBlock?: BlockTag
   ): Promise<EthersEvent[]> => {
     Logger.info({
-      client: this.clientConf.name,
+      client: this.client,
       at: "Blockchain#query",
       message: `Querying blockchain network for events from block ${fromBlock} to block ${toBlock}...`,
     });
@@ -119,14 +124,14 @@ export default class Blockchain {
         toBlock
       );
       Logger.info({
-        client: this.clientConf.name,
+        client: this.client,
         at: "Blockchain#query",
         message: `Events found: ${networkEvents.length}`,
       });
       return networkEvents;
     } catch (err) {
       Logger.error({
-        client: this.clientConf.name,
+        client: this.client,
         at: "Blockchain#query",
         message: "Query failed.",
         error: err,
@@ -158,14 +163,14 @@ export default class Blockchain {
     try {
       const res = await this.provider.getNetwork();
       Logger.info({
-        client: this.clientConf.name,
+        client: this.client,
         at: "Blockchain#verifyNetworkConnection",
         message: `Connected to network: ${res.name}`,
       });
       return true;
     } catch (err) {
       Logger.info({
-        client: this.clientConf.name,
+        client: this.client,
         at: "Blockchain#verifyNetworkConnection",
         message: `Not connected to network: ${err}`,
       });

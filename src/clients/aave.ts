@@ -33,10 +33,7 @@ export default class Aave extends Client {
   constructor(conf: IConfig) {
     super(conf);
     this.bc = new Blockchain(conf);
-    this.gql = new GqlClient(
-      conf.client,
-      conf.dataSources.graphql.endpoint as string
-    );
+    this.gql = new GqlClient(conf);
   }
 
   checkLiquidatableAccountsApi = async (): Promise<ClientFunctionResult> => {
@@ -109,12 +106,18 @@ export default class Aave extends Client {
   // };
 
   private _fetchLiquidatableAccountReservesFromApi = async () => {
+    if (!this.conf.dataSources.apis)
+      throw new Error("Api conf must be present in confs provided.");
     const { data } = await apiRequest(this.conf.client, {
       method: "GET",
       url: this.conf.dataSources.apis.liquidatableAccountReserves,
     });
     if (data) {
-      const parsedData = parseLiquidatableAccountReservesFromApi(data);
+      const parsedData = parseLiquidatableAccountReservesFromApi(
+        this.conf.client,
+        this.conf.network,
+        data
+      );
       return parsedData;
     } else {
       return null;
@@ -160,6 +163,9 @@ export default class Aave extends Client {
   private _fetchReservesListFromGql = async (): Promise<
     DatabaseUpdate[] | null
   > => {
+    // TODO - do this through gql client??
+    if (!this.conf.dataSources.graphql)
+      throw new Error("Api conf must be present in confs provided.");
     const res = await this.gql.query(
       this.conf.dataSources.graphql.queries.GET_RESERVES_LIST
     );

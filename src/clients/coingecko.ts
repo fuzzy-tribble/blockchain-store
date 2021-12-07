@@ -48,6 +48,8 @@ export default class Coingecko extends Client {
   private _fetchCoinListFromApi = async (): Promise<
     DatabaseUpdate[] | null
   > => {
+    if (!this.conf.dataSources.apis)
+      throw new Error("Api conf must be present in confs provided.");
     const data = await apiRequest(this.conf.client, {
       method: "GET",
       url: this.conf.dataSources.apis.allCoinsList,
@@ -63,6 +65,8 @@ export default class Coingecko extends Client {
   private _fetchCoinMarketDataFromApi = async (): Promise<
     DatabaseUpdate[] | null
   > => {
+    if (!this.conf.dataSources.apis)
+      throw new Error("Api conf must be present in confs provided.");
     const data: CoingeckoCoinMarketData[] = await apiRequest(
       ClientNames.COINGECKO,
       {

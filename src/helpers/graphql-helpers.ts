@@ -6,15 +6,24 @@ import {
   NormalizedCacheObject,
 } from "@apollo/client/core";
 import Logger from "../lib/logger";
+import { IConfig } from "../models";
+import { ClientNames } from "../lib/types";
+import { IGqlConf } from "../models/config";
 
 export default class GqlClient {
-  public clientName: string;
+  public client: ClientNames;
+  public network: string;
+  public gqlConf: IGqlConf;
   public gqlClient: ApolloClient<NormalizedCacheObject>;
 
-  constructor(clientName: string, endpoint: string) {
-    this.clientName = clientName;
+  constructor(conf: IConfig) {
+    this.client = conf.client;
+    this.network = conf.network;
+    if (!conf.dataSources.graphql)
+      throw new Error("Gql conf must be present in confs provided.");
+    this.gqlConf = conf.dataSources.graphql;
     this.gqlClient = new ApolloClient({
-      link: new HttpLink({ uri: endpoint, fetch }),
+      link: new HttpLink({ uri: this.gqlConf.endpoint, fetch }),
       cache: new InMemoryCache(),
     });
   }
@@ -22,7 +31,7 @@ export default class GqlClient {
   query = async (query: any) => {
     try {
       Logger.info({
-        client: this.clientName,
+        client: this.client,
         at: "Gql#query",
         message: `Querying gql...`,
       });
@@ -30,14 +39,14 @@ export default class GqlClient {
         query: query,
       });
       Logger.info({
-        client: this.clientName,
+        client: this.client,
         at: "Gql#query",
         message: `Done querying gql.`,
       });
       return res;
     } catch (err) {
       Logger.error({
-        client: this.clientName,
+        client: this.client,
         at: "Gql#query",
         message: `Querying gql...`,
         error: err,

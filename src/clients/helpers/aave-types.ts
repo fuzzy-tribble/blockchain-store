@@ -28,7 +28,7 @@ export interface AaveGqlReserve {
   price: {
     id: string;
     priceInEth: string;
-    lastUpdatedTimestamp: number;
+    lastUpdateTimestamp: number;
     [x: string]: any;
   };
   [x: string]: any;
@@ -102,13 +102,9 @@ export interface AaveApiUser {
   healthFactor: string;
   [x: string]: any;
 }
-export interface AaveApiAccountReserves {
-  principalBorrows: string;
-  currentBorrows: string;
-  currentBorrowsETH: string;
-  currentBorrowsUSD: string;
-  reserve: AaveApiReserve;
-  user: AaveApiUser;
+export interface AaveApiAccountReserve {
   id: string;
+  user: AaveApiUser;
+  reserve: AaveApiReserve;
   [x: string]: any;
 }

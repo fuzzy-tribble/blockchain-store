@@ -19,19 +19,9 @@ const dydxConfigs: IConfig = {
   ],
   listenerNames: [],
   dataSources: {
-    blockchain: {
-      rpcUrl: undefined,
-      lastBlockChecked: undefined,
-    },
     apis: {
       baseUrl: "https://api.dydx.exchange",
       allMarkets: "https://api.dydx.exchange/v3/markets",
-      // // // Ropsten
-      // baseUrl: "https://api.stage.dydx.exchange",
-    },
-    graphql: {
-      endpoint: undefined,
-      queries: undefined,
     },
   },
 };
@@ -51,10 +41,6 @@ const coingeckoConfigs: IConfig = {
   ],
   listenerNames: [],
   dataSources: {
-    blockchain: {
-      rpcUrl: undefined,
-      lastBlockChecked: undefined,
-    },
     apis: {
       // Free API* has a rate limit of 50 calls/minute
       baseUrl: "https://api.coingecko.com/api/v3/",
@@ -62,10 +48,6 @@ const coingeckoConfigs: IConfig = {
         "https://api.coingecko.com/api/v3/coins/list?include_platform=true",
       coinsMarketData:
         "https://api.coingecko.com/api/v3/coins/markets?vs_currency=eth&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d",
-    },
-    graphql: {
-      endpoint: undefined,
-      queries: undefined,
     },
   },
 };
@@ -82,8 +64,6 @@ const chainlinkMainnetConfigs: IConfig = {
       contractAddress: "0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf",
       contractAbi: [],
     },
-    apis: {},
-    graphql: {},
   },
 };
 
@@ -1027,15 +1007,13 @@ const sushiswapMainnet: IConfig = {
   ],
   listenerNames: [EventNames.MAJOR_TOKEN_PRICE_CHANGE],
   dataSources: {
-    blockchain: {},
     apis: {
-      // baseUrl: "https://api2.sushipro.io/",
+      baseUrl: "https://api2.sushipro.io/",
       GET_ALL_PAIRS: {
         method: "get",
         url: "https://api2.sushipro.io/?action=all_pairs",
       },
     },
-    graphql: {},
   },
 };
 
@@ -1045,11 +1023,9 @@ const compound: IConfig = {
   pollFunctions: [],
   listenerNames: [],
   dataSources: {
-    blockchain: {},
     apis: {
       baseUrl: "https://api.compound.finance/api",
     },
-    graphql: {},
   },
 };
 
@@ -1059,13 +1035,14 @@ const uniswapMainnet: IConfig = {
   pollFunctions: [],
   listenerNames: [],
   dataSources: {
-    blockchain: {},
     apis: {
+      baseUrl: "",
       allLiquidatableAccounts:
         "https://protocol-api.aave.com/liquidations?get=uniswap",
     },
     graphql: {
       endpoint: "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3",
+      queries: {},
     },
   },
 };

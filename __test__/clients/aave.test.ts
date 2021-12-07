@@ -5,14 +5,28 @@ import {
   parseLiquidatableAccountReservesFromApi,
   parseReservesFromGql,
 } from "../../src/clients/helpers/aave-helpers";
+import {
+  AaveApiAccountReserve,
+  AaveGqlReserve,
+} from "../../src/clients/helpers/aave-types";
 import { validateMany } from "../../src/helpers/db-helpers";
 import Logger from "../../src/lib/logger";
-import { ClientNames, NetworkNames } from "../../src/lib/types";
-import { IConfig, Config, Token, TokenPrice, Reserve } from "../../src/models";
+import { ClientNames, DatabaseUpdate, NetworkNames } from "../../src/lib/types";
+import {
+  IConfig,
+  Config,
+  Token,
+  TokenPrice,
+  Reserve,
+  AccountReserve,
+  Account,
+} from "../../src/models";
 import { mongodb_test_uri } from "../mockData";
 
-const mockLiquidatableAccountsFromApi = require("../mockData/aave/liquidatableAccountsFromApi.json");
-const mockAaveReservesFromGql = require("../mockData/aave/reservesFromGql.json");
+let tmp = require("../mockData/aave/liquidatableAccountsFromApi.json");
+const mockLiquidatableAccountsFromApi: AaveApiAccountReserve[] = tmp.data;
+tmp = require("../mockData/aave/reservesFromGql.json");
+const mockAaveReservesFromGql: AaveGqlReserve[] = tmp.data.reserves;
 
 // Silence logs while running tests
 Logger.transports.forEach((t) => (t.silent = true));
@@ -21,11 +35,10 @@ Logger.transports.forEach((t) => (t.silent = true));
 
 describe("Client: aave", () => {
   let aave: Aave;
-  let conf: IConfig | null;
 
   before(async () => {
     await mongoose.connect(mongodb_test_uri);
-    conf = await Config.findByClientNetwork(
+    let conf = await Config.findByClientNetwork(
       ClientNames.AAVE,
       NetworkNames.MAINNET
     );
@@ -33,7 +46,7 @@ describe("Client: aave", () => {
       throw Error("conf not found for client/network supplied.");
     }
     aave = new Aave(conf);
-    await aave.setup();
+    // await aave.setup();
   });
 
   after(async () => {
@@ -42,42 +55,74 @@ describe("Client: aave", () => {
 
   describe("API data sources", () => {
     describe("Parse data", () => {
-      it("Parse liquidatable accounts/reserves from api data", () => {
-        // let parsedData = parseLiquidatableAccountReservesFromApi(
-        //   mockLiquidatableAccountsFromApi
-        // );
+      let parsedData: DatabaseUpdate[];
+
+      before(() => {
+        parsedData = parseLiquidatableAccountReservesFromApi(
+          aave.conf.client,
+          aave.conf.network,
+          mockLiquidatableAccountsFromApi
+        );
       });
-      describe("Fetch api data", () => {
-        it("Fetch liquidatable accounts/reserves from api data", () => {});
+
+      it("should have valid parsed tokens", () => {
+        let res = validateMany(parsedData[0].data, Token.schema);
+        expect(res.invalidCount).to.equal(0);
       });
-      describe("Poll functions", () => {
-        it("Poll checkLiquidatableAccountsApi() successfully", () => {});
+      it("should have valid parsed reserves", () => {
+        let res = validateMany(parsedData[1].data, Reserve.schema);
+        expect(res.invalidCount).to.equal(0);
+      });
+      it("should have valid parsed account reserves", () => {
+        let res = validateMany(parsedData[2].data, AccountReserve.schema);
+        expect(res.invalidCount).to.equal(0);
+      });
+      it("should have valid parsed accounts", () => {
+        let res = validateMany(parsedData[3].data, Account.schema);
+        expect(res.invalidCount).to.equal(0);
       });
     });
+
+    // describe("Fetch api data", () => {
+    //   it("Fetch liquidatable accounts/reserves from api data", () => {});
+    // });
+    // describe("Poll functions", () => {
+    //   it("Poll checkLiquidatableAccountsApi() successfully", () => {});
+    // });
   });
 
-  describe("Graphql data sources", () => {
-    describe("Fetch gql data", () => {});
-    describe("Parse gql data", () => {
-      let parsedData = parseReservesFromGql(
-        aave.conf.client,
-        aave.conf.network,
-        mockAaveReservesFromGql
-      );
-      let tokenRes = validateMany(parsedData[0].data, Token.schema);
-      let tokenPriceRes = validateMany(parsedData[1].data, TokenPrice.schema);
-      let reservesRes = validateMany(parsedData[2].data, Reserve.schema);
-      expect(tokenRes.invalidCount).to.equal(0);
-      expect(tokenPriceRes.invalidCount).to.equal(0);
-      expect(reservesRes.invalidCount).to.equal(0);
-    });
-    describe("Gql poll functions", () => {});
-  });
+  // describe("Graphql data sources", () => {
+  //   // describe("Fetch gql data", () => {});
+  //   describe("Parse gql reserves", () => {
+  //     let parsedData: DatabaseUpdate[];
+  //     before(() => {
+  //       parsedData = parseReservesFromGql(
+  //         aave.conf.client,
+  //         aave.conf.network,
+  //         mockAaveReservesFromGql
+  //       );
+  //     });
+  //     it("should be valid db update: tokens", () => {
+  //       let tokenRes = validateMany(parsedData[0].data, Token.schema);
+  //       expect(tokenRes.invalidCount).to.equal(0);
+  //       expect(tokenRes.validCount).to.equal(mockAaveReservesFromGql.length);
+  //     });
+  //     it("should be valid db update: tokenPrices", () => {
+  //       let tokenPriceRes = validateMany(parsedData[1].data, TokenPrice.schema);
+  //       expect(tokenPriceRes.invalidCount).to.equal(0);
+  //     });
+  //     it("should be valid db update: reserves", () => {
+  //       let reservesRes = validateMany(parsedData[2].data, Reserve.schema);
+  //       expect(reservesRes.invalidCount).to.equal(0);
+  //     });
+  //   });
+  //   // describe("Gql poll functions", () => {});
+  // });
 
-  describe("Blockchain data sources", () => {
-    describe("Fetch blockchain data", () => {});
-    describe("Parse blockchain data", () => {});
-    describe("Blockchain poll functions", () => {});
-    describe("Blockchain listeners", () => {});
-  });
+  // // describe("Blockchain data sources", () => {
+  // //   describe("Fetch blockchain data", () => {});
+  // //   describe("Parse blockchain data", () => {});
+  // //   describe("Blockchain poll functions", () => {});
+  // //   describe("Blockchain listeners", () => {});
+  // // });
 });

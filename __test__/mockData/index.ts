@@ -362,18 +362,7 @@ const conf: IConfig = {
     { name: "mockPollFunction2", frequency: 2 * 1000 },
   ],
   listenerNames: [],
-  dataSources: {
-    blockchain: {
-      rpcUrl: "",
-    },
-    apis: {
-      endpoint: "",
-    },
-    graphql: {
-      endpoint: "",
-      queries: {},
-    },
-  },
+  dataSources: {},
 };
 
 export class MockClient extends Client {

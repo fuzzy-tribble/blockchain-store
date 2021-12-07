@@ -1,26 +1,34 @@
 import { Document, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
 import { ClientFunction, ClientNames } from "../lib/types";
+
+export interface IBlockchainConf {
+  rpcUrl: string;
+  contractAddress: string;
+  contractAbi: any;
+  ifaceAbi?: any;
+  lastBlockChecked?: number;
+  [key: string]: any;
+}
+
+export interface IApiConf {
+  baseUrl: string;
+  [key: string]: any;
+}
+export interface IGqlConf {
+  endpoint: string;
+  queries: Record<string, {}>;
+  [key: string]: any;
+}
 export interface IConfig {
   client: ClientNames;
   network: string;
   pollFunctions: Array<ClientFunction>;
   listenerNames: Array<string>;
   dataSources: {
-    blockchain: {
-      rpcUrl?: string;
-      lastBlockChecked?: number;
-      [key: string]: any;
-    };
-    apis: {
-      endpoint?: string;
-      [key: string]: any;
-    };
-    graphql: {
-      endpoint?: string;
-      queries?: any;
-      [key: string]: any;
-    };
+    blockchain?: IBlockchainConf;
+    apis?: IApiConf;
+    graphql?: IGqlConf;
   };
   [key: string]: any;
 }

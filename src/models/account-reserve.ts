@@ -14,8 +14,7 @@ export interface IAccountReserve {
   reserve: string | FilterQuery<IReserveDoc>;
   collateralizedByUser?: boolean;
   liquidationThreshold?: number;
-  // currentTotalCollateral: number; // aToken in aave
-  // currentTotalDebt: number;
+  [x: string]: any;
 }
 
 // DOCUMENT DEFS //

@@ -1,7 +1,7 @@
 import Client from "../lib/client";
 import { ClientNames } from "../lib/types";
-import { IConfig, Config } from "../models";
-
+import { Config } from "../models";
+import Aave from "./aave";
 import Coingecko from "./coingecko";
 import DydxSolo from "./dydx";
 
@@ -16,6 +16,9 @@ export const loadClients = async (): Promise<Client[]> => {
     let clients: Client[] = [];
     clientConfs.forEach((conf) => {
       switch (conf.client) {
+        case ClientNames.AAVE:
+          clients.push(new Aave(conf));
+          break;
         case ClientNames.DYDX:
           clients.push(new DydxSolo(conf));
           break;

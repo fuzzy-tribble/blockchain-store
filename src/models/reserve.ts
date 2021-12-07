@@ -41,7 +41,7 @@ const ReserveSchemaFields: Record<keyof IReserve, any> = {
     enum: ClientNames,
     required: true,
   },
-  address: {
+  uid: {
     type: String,
     required: true,
   },
