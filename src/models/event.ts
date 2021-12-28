@@ -1,9 +1,12 @@
+/**
+ * Events model
+ */
 import { Document, InsertManyOptions, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
 import { ClientNames, EventNames, DatabaseUpdateResult } from "../lib/types";
 export interface IEvent {
   name: EventNames;
-  source: ClientNames;
+  source: ClientNames | null;
   network?: string;
   data?: {};
 }
@@ -30,7 +33,7 @@ Schema.Types.String.checkRequired((v) => typeof v === "string");
 // SCHEMA DEFS //
 const EventSchemaFields: Record<keyof IEvent, any> = {
   name: { type: String, required: true },
-  source: { type: String, required: true },
+  source: { type: String, required: false, default: null },
   network: { type: String, required: false },
   data: { type: Object, required: false },
 };
@@ -41,6 +44,11 @@ const schemaOpts = {
 
 const EventSchema = new Schema(EventSchemaFields, schemaOpts);
 
+/**
+ * Inserts valid events
+ * @param events
+ * @returns
+ */
 EventSchema.statics.addData = async function (
   events: IEvent[]
 ): Promise<DatabaseUpdateResult> {

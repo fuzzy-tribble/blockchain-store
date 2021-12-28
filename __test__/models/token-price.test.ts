@@ -8,6 +8,8 @@ import {
   mockTokenPricesUpdated,
   mockInvalidTokenPrices,
   mongodb_test_uri,
+  nowDate,
+  beforeDate,
 } from "../mockData";
 import { ClientNames } from "../../src/lib/types";
 import Logger from "../../src/lib/logger";
@@ -45,13 +47,22 @@ describe("Collection: token-prices", () => {
       let res = await TokenPrice.addData(mockTokenPrices);
       expect(res.upsertedCount).to.equal(mockTokenPrices.length);
     });
+    it("should NOT upsert TOKEN-PRICES if not more recent", async () => {
+      let res1 = await TokenPrice.addData(mockTokenPrices);
+      expect(res1.upsertedCount).to.equal(mockTokenPrices.length);
+      let olderTokenPriceUpdate: ITokenPrice = {
+        token: mockTokens[0],
+        priceInEth: "200",
+        source: ClientNames.COINGECKO,
+        lastUpdated: new Date("01-01-2019"),
+      };
+      let res2 = await TokenPrice.addData([olderTokenPriceUpdate]);
+      expect(res2.upsertedCount + res2.modifiedCount).to.equal(0);
+    });
     it("should upsert TOKEN-PRICES already in db", async () => {
       let res1 = await TokenPrice.addData(mockTokenPrices);
       let res2 = await TokenPrice.addData(mockTokenPricesUpdated);
-      expect(res2.modifiedCount + res2.upsertedCount).to.equal(
-        mockTokenPrices.length
-      );
-      expect(res1.upsertedIds).to.have.all.members(res2.modifiedIds);
+      expect(res2.upsertedCount).to.equal(mockTokenPricesUpdated.length);
     });
     it("should handle adding invalid TOKEN-PRICES (returns nChanged=0 and doesn't add to db)", async () => {
       let res = await TokenPrice.addData(mockInvalidTokenPrices as any[]);
@@ -59,6 +70,8 @@ describe("Collection: token-prices", () => {
       expect(await TokenPrice.countDocuments()).to.equal(0);
     });
   });
+
+  // TODO - emits event on token price change
 
   it("should findLatestTokenPrice from source", async () => {
     let token = { uid: mockTokens[0].uid };
@@ -68,29 +81,23 @@ describe("Collection: token-prices", () => {
         token: token,
         priceInEth: "999",
         source: src,
-        lastUpdated: Date.now().toString(),
+        lastUpdated: nowDate,
       },
       {
         token: token,
         priceInEth: "456",
         source: src,
-        lastUpdated: new Date().setDate(Date.now() - 1).toString(),
-      },
-      {
-        token: token,
-        priceInEth: "123",
-        source: src,
-        lastUpdated: new Date().setDate(Date.now() - 0.5).toString(),
+        lastUpdated: beforeDate,
       },
     ]);
     let latestTokenPrice = await TokenPrice.findLatestTokenPriceFromSource(
-      mockTokens[0],
+      token.uid,
       src
     );
     expect(latestTokenPrice?.priceInEth).to.equal(999);
   });
 
-  it("should getTokenPricesAcrossClients", async () => {
-    // TODO
-  });
+  // it("should getTokenPricesAcrossClients", async () => {
+  //   // TODO
+  // });
 });

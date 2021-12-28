@@ -45,18 +45,18 @@ export const mockGqlEndpoint =
 export const mockEvents: Array<IEvent> = [
   // DUPLICATE EVENTS SHOULD NOT OVERWRITE
   {
-    name: EventNames.ARBITRAGE,
+    name: EventNames.IS_ARBITRAGABLE,
     source: ClientNames.AAVE,
     data: { somestuff: "slemkla" },
   },
   {
-    name: EventNames.ARBITRAGE,
+    name: EventNames.IS_ARBITRAGABLE,
     source: ClientNames.AAVE,
     data: { somestuff: "slemkla" },
   },
   // DATALESS EVENTS SHOULD BE INSERTED
   {
-    name: EventNames.LIQUIDATABLE_ACCOUNT,
+    name: EventNames.IS_LIQUIDATABLE_ACCOUNT,
     network: NetworkNames.KOVAN,
     source: ClientNames.AAVE,
   },
@@ -64,18 +64,8 @@ export const mockEvents: Array<IEvent> = [
 
 export const mockInvalidEvents = [
   {
-    name: EventNames.ARBITRAGE,
-    client: ClientNames.AAVE,
-    network: null, // network must be in enum
-    data: { somestuff: "slemkla" },
-  },
-  {
-    name: EventNames.LIQUIDATION,
-    client: "invalidClientName", // client must be in enum
-  },
-  {
     name: null, // name must be a string
-    client: ClientNames.AAVE,
+    source: ClientNames.AAVE,
     data: { somestuff: "slemkla" },
   },
 ];
@@ -134,18 +124,30 @@ export const mockInvalidTokens = [
   },
 ];
 
+export const nowDate: Date = new Date();
+export const beforeDate: Date = new Date();
+beforeDate.setDate(-1);
+
 export const mockTokenPrices: Array<ITokenPrice> = [
   {
-    token: mockTokens[0],
+    token: {
+      uid: mockTokens[0].uid,
+    },
     priceInEth: "398",
     source: ClientNames.COINGECKO,
-    lastUpdated: Date.now().toString(),
+    lastUpdated: beforeDate,
   },
   {
-    token: mockTokens[1],
+    token: { uid: mockTokens[1].uid },
     priceInEth: "45",
     source: ClientNames.COINGECKO,
-    lastUpdated: Date.now().toString(),
+    lastUpdated: beforeDate,
+  },
+  {
+    token: { uid: mockTokens[1].uid },
+    priceInEth: "46",
+    source: ClientNames.CHAINLINK,
+    lastUpdated: beforeDate,
   },
 ];
 
@@ -154,28 +156,21 @@ export const mockTokenPricesUpdated: Array<ITokenPrice> = [
     token: { uid: mockTokens[0].uid },
     priceInEth: "999",
     source: ClientNames.COINGECKO,
-    lastUpdated: Date.now().toString(),
+    lastUpdated: nowDate,
   },
   {
     token: { uid: mockTokens[1].uid },
     priceInEth: "111",
     source: ClientNames.COINGECKO,
-    lastUpdated: Date.now().toString(),
+    lastUpdated: nowDate,
   },
 ];
 
 export const mockInvalidTokenPrices = [
   {
     // source is undefined
-    token: mockTokens[0],
+    token: { uid: mockTokens[0].uid },
     priceInEth: "398",
-    lastUpdated: Date.now().toString(),
-  },
-  {
-    // token filter is incomplete/invalid
-    token: { address: mockTokens[1].address },
-    priceInEth: "45",
-    source: ClientNames.COINGECKO,
     lastUpdated: Date.now().toString(),
   },
 ];
@@ -295,60 +290,79 @@ export const mockInvalidReserves = [
 
 export const mockAccountReserves: Array<IAccountReserve> = [
   {
-    account: mockAccounts[0],
-    reserve: mockReserves[0],
+    uid: mockAccounts[0].address.concat(mockReserves[0].uid),
+    account: {
+      address: mockAccounts[0].address,
+      client: mockAccounts[0].client,
+      network: mockAccounts[0].network,
+    },
+    reserve: {
+      uid: mockReserves[0].uid,
+      client: mockReserves[0].client,
+      network: mockReserves[0].network,
+    },
   },
   {
+    uid: "tippytappy",
     account: {
       address: mockAccounts[1].address,
       client: mockAccounts[1].client,
       network: mockAccounts[1].network,
     },
     reserve: {
-      address: mockReserves[1].address,
+      uid: mockReserves[1].uid,
       client: mockReserves[1].client,
       network: mockReserves[1].network,
-      tokens: mockReserves[1].tokens,
     },
   },
 ];
 
 export const mockAccountReservesUpdated: Array<IAccountReserve> = [
   {
-    account: mockAccounts[0],
-    reserve: mockReserves[1],
+    uid: mockAccounts[0].address.concat(mockReserves[0].uid),
+    account: {
+      address: mockAccounts[0].address,
+      client: mockAccounts[0].client,
+      network: mockAccounts[0].network,
+    },
+    reserve: {
+      uid: mockReserves[0].uid,
+      client: mockReserves[0].client,
+      network: mockReserves[0].network,
+    },
+    someUpdate: 2849309,
   },
   {
+    uid: "tippytappy",
     account: {
       address: mockAccounts[1].address,
       client: mockAccounts[1].client,
       network: mockAccounts[1].network,
     },
     reserve: {
-      uid: mockReserves[0].address,
-      client: mockReserves[0].client,
-      network: mockReserves[0].network,
-      tokens: mockReserves[0].tokens,
+      uid: mockReserves[1].uid,
+      client: mockReserves[1].client,
+      network: mockReserves[1].network,
     },
+    someDataUpdate: "askjdalkdj",
   },
 ];
 
 export const mockInvalidAccountReserves = [
-  {},
   {
-    // empty not allowed
-    account: {},
-    reserve: {},
+    //empty not allowed
+  },
+  {
+    // null not allowed
+    uid: null,
+    account: null,
+    reserve: null,
   },
   {
     // don't exist in db
+    uid: 283409,
     account: 123,
     reserve: 556,
-  },
-  {
-    // invalid account
-    account: { address: "000" },
-    reserve: mockReserves[0],
   },
 ];
 
@@ -358,11 +372,13 @@ const conf: IConfig = {
   client: ClientNames.AAVE,
   network: NetworkNames.MAINNET,
   pollFunctions: [
-    { name: "mockPollFunction1", frequency: 1 * 1000 },
-    { name: "mockPollFunction2", frequency: 2 * 1000 },
+    { fname: "mockPollFunction1", frequency: 1 * 1000 },
+    { fname: "mockPollFunction2", frequency: 2 * 1000 },
   ],
   listenerNames: [],
   dataSources: {},
+  subscriptions: [],
+  cListeners: [],
 };
 
 export class MockClient extends Client {

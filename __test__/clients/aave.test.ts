@@ -1,5 +1,6 @@
-import { expect } from "chai";
 import mongoose from "mongoose";
+import chai, { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
 import Aave from "../../src/clients/aave";
 import {
   parseLiquidatableAccountReservesFromApi,
@@ -28,6 +29,9 @@ const mockLiquidatableAccountsFromApi: AaveApiAccountReserve[] = tmp.data;
 tmp = require("../mockData/aave/reservesFromGql.json");
 const mockAaveReservesFromGql: AaveGqlReserve[] = tmp.data.reserves;
 
+// Use chai-as-promised plugin for async throws
+chai.use(chaiAsPromised);
+
 // Silence logs while running tests
 Logger.transports.forEach((t) => (t.silent = true));
 
@@ -46,7 +50,6 @@ describe("Client: aave", () => {
       throw Error("conf not found for client/network supplied.");
     }
     aave = new Aave(conf);
-    // await aave.setup();
   });
 
   after(async () => {
@@ -54,7 +57,7 @@ describe("Client: aave", () => {
   });
 
   describe("API data sources", () => {
-    describe("Parse data", () => {
+    describe("Parse liq account reserves from api", () => {
       let parsedData: DatabaseUpdate[];
 
       before(() => {
@@ -83,46 +86,67 @@ describe("Client: aave", () => {
       });
     });
 
-    // describe("Fetch api data", () => {
-    //   it("Fetch liquidatable accounts/reserves from api data", () => {});
-    // });
-    // describe("Poll functions", () => {
-    //   it("Poll checkLiquidatableAccountsApi() successfully", () => {});
-    // });
+    describe("Fetch api liq account reserves from api", () => {
+      it("Fetch liquidatable accounts/reserves from api data", () => {
+        return expect(aave.checkLiquidatableAccountsApi()).to.eventually.be.not
+          .empty;
+      }).timeout(10 * 1000);
+    });
+    describe("Poll functions", () => {
+      it("Poll checkLiquidatableAccountsApi() successfully", async () => {
+        let clientFunctionResult = await aave.checkLiquidatableAccountsApi();
+        // TODO - try adding one to db to make sure works??
+      });
+    });
   });
 
-  // describe("Graphql data sources", () => {
-  //   // describe("Fetch gql data", () => {});
-  //   describe("Parse gql reserves", () => {
-  //     let parsedData: DatabaseUpdate[];
-  //     before(() => {
-  //       parsedData = parseReservesFromGql(
-  //         aave.conf.client,
-  //         aave.conf.network,
-  //         mockAaveReservesFromGql
-  //       );
-  //     });
-  //     it("should be valid db update: tokens", () => {
-  //       let tokenRes = validateMany(parsedData[0].data, Token.schema);
-  //       expect(tokenRes.invalidCount).to.equal(0);
-  //       expect(tokenRes.validCount).to.equal(mockAaveReservesFromGql.length);
-  //     });
-  //     it("should be valid db update: tokenPrices", () => {
-  //       let tokenPriceRes = validateMany(parsedData[1].data, TokenPrice.schema);
-  //       expect(tokenPriceRes.invalidCount).to.equal(0);
-  //     });
-  //     it("should be valid db update: reserves", () => {
-  //       let reservesRes = validateMany(parsedData[2].data, Reserve.schema);
-  //       expect(reservesRes.invalidCount).to.equal(0);
-  //     });
-  //   });
-  //   // describe("Gql poll functions", () => {});
-  // });
+  describe("Graphql data sources", () => {
+    describe("Fetch gql reserves", () => {
+      it("should fetch reserves from gql", () => {
+        return expect(aave.updateReservesList()).to.eventually.be.not.empty;
+      }).timeout(10 * 1000);
+    });
 
-  // // describe("Blockchain data sources", () => {
-  // //   describe("Fetch blockchain data", () => {});
-  // //   describe("Parse blockchain data", () => {});
-  // //   describe("Blockchain poll functions", () => {});
-  // //   describe("Blockchain listeners", () => {});
-  // // });
+    describe("Parse gql reserves", () => {
+      let parsedData: DatabaseUpdate[];
+      before(() => {
+        parsedData = parseReservesFromGql(
+          aave.conf.client,
+          aave.conf.network,
+          mockAaveReservesFromGql
+        );
+      });
+      it("should be valid db update: tokens", () => {
+        let tokenRes = validateMany(parsedData[0].data, Token.schema);
+        expect(tokenRes.invalidCount).to.equal(0);
+        expect(tokenRes.validCount).to.equal(mockAaveReservesFromGql.length);
+      });
+      it("should be valid db update: tokenPrices", () => {
+        let tokenPriceRes = validateMany(parsedData[1].data, TokenPrice.schema);
+        expect(tokenPriceRes.invalidCount).to.equal(0);
+      });
+      it("should be valid db update: reserves", () => {
+        let reservesRes = validateMany(parsedData[2].data, Reserve.schema);
+        expect(reservesRes.invalidCount).to.equal(0);
+      });
+    });
+
+    describe("Gql poll functions", () => {
+      it("Poll checkLiquidatableAccountsApi() successfully", async () => {
+        let clientFunctionResult = await aave.updateReservesList();
+        // TODO - try adding one to db to make sure works??
+      });
+    });
+  });
+
+  describe("Blockchain data sources", () => {
+    before(async () => {
+      // setup blockchain
+      await aave.setup();
+    });
+    describe("Fetch blockchain data", () => {});
+    describe("Parse blockchain data", () => {});
+    describe("Blockchain poll functions", () => {});
+    describe("Blockchain listeners", () => {});
+  });
 });

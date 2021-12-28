@@ -19,15 +19,14 @@ export type DbBn = {
   hex: string;
 };
 // ===============================
-
 // ============ Enums ============
 export enum EventNames {
+  IS_LIQUIDATABLE_ACCOUNT = "isLiquidatableAccount",
+  IS_ARBITRAGABLE = "isArbitragable",
+  IS_YIELD_FARMER_TRIGGER = "isYieldFarmerTrigger",
+  IS_TOKEN_PRICE_CHANGE = "isTokenPriceChange",
   LIQUIDATION = "liquidation",
-  PENDING_LIQUIDATION = "pending-liquidation",
-  ARBITRAGE = "arbitrage",
-  PENDING_ARBITRAGE = "pending-arbitrage",
-  MAJOR_TOKEN_PRICE_CHANGE = "major-token-price-change",
-  LIQUIDATABLE_ACCOUNT = "liquidatable-account",
+  MAJOR_TOKEN_PRICE_CHANGE = "MAJOR_TOKEN_PRICE_CHANGE",
 }
 
 // TODO - auto do this using mongo connection.collections perhaps...
@@ -73,9 +72,9 @@ export const FIVE_MINS_IN_MS: number = 60 * 5 * 1000;
 
 // ============ Interfaces ============
 export interface ClientFunction {
-  name: string;
+  fname: string;
+  frequency?: number;
   args?: string;
-  frequency: number;
 }
 
 export interface ClientFunctionResult {

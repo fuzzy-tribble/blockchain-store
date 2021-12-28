@@ -1,7 +1,9 @@
+/**
+ * Configs model
+ */
 import { Document, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
-import { ClientFunction, ClientNames } from "../lib/types";
-
+import { ClientFunction, ClientNames, EventNames } from "../lib/types";
 export interface IBlockchainConf {
   rpcUrl: string;
   contractAddress: string;
@@ -24,7 +26,8 @@ export interface IConfig {
   client: ClientNames;
   network: string;
   pollFunctions: Array<ClientFunction>;
-  listenerNames: Array<string>;
+  subscriptions: Array<Record<"subscribe" | "unsubscribe", ClientFunction>>;
+  cListeners: Array<[EventNames, ClientFunction]>;
   dataSources: {
     blockchain?: IBlockchainConf;
     apis?: IApiConf;
@@ -51,7 +54,7 @@ export interface IConfigModel extends Model<IConfigDoc> {
   findByClientNetwork(
     client: ClientNames,
     network: string
-  ): Promise<IConfigDoc>;
+  ): Promise<IConfigDoc | null>;
   propertyNames: typeof PropertyNames;
 }
 
@@ -60,7 +63,7 @@ const ConfigSchemaFields: Record<keyof IConfig, any> = {
   client: { type: String, required: true },
   network: { type: String, required: true },
   pollFunctions: { type: Schema.Types.Mixed, required: true },
-  listenerNames: { type: Schema.Types.Mixed, required: true },
+  cListeners: { type: Schema.Types.Mixed, required: true },
   dataSources: { type: Schema.Types.Mixed, required: true },
 };
 

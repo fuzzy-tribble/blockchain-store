@@ -1,6 +1,10 @@
+/**
+ * Token price model
+ */
 import { Document, FilterQuery, model, Model, Schema } from "mongoose";
+import { EventsManager } from "../helpers/socket-helpers";
 import { IToken, Token, ITokenDoc } from "./token";
-import { ClientNames, DatabaseUpdateResult } from "../lib/types";
+import { ClientNames, DatabaseUpdateResult, EventNames } from "../lib/types";
 import {
   defaultQueryOptions,
   defaultSchemaOpts,
@@ -9,10 +13,10 @@ import {
 import Logger from "../lib/logger";
 
 export interface ITokenPrice {
-  token: FilterQuery<ITokenDoc>;
+  token: string | FilterQuery<ITokenDoc>;
   priceInEth: string;
   source: ClientNames;
-  lastUpdated: string;
+  lastUpdated: Date;
   [x: string]: any;
 }
 
@@ -27,7 +31,7 @@ enum PropertyNames {
 export interface ITokenPriceModel extends Model<ITokenPriceDoc> {
   addData(tokenPrices: ITokenPrice[]): Promise<DatabaseUpdateResult>;
   findLatestTokenPriceFromSource(
-    token: IToken,
+    tokenUid: string,
     source: ClientNames
   ): Promise<ITokenPriceDoc | null>;
   findPriceDiscrepanciesBySource(
@@ -41,7 +45,7 @@ const TokenPriceSchemaFields: Record<keyof ITokenPrice, any> = {
   token: { type: Schema.Types.ObjectId, ref: "tokens", required: true },
   priceInEth: { type: Number, required: true },
   source: { type: String, enum: ClientNames, required: true },
-  lastUpdated: { type: Schema.Types.Date, required: true },
+  lastUpdated: { type: Date, required: true },
 };
 
 const TokenPriceSchema = new Schema(TokenPriceSchemaFields, defaultSchemaOpts);
@@ -54,6 +58,13 @@ TokenPriceSchema.pre(["updateOne"], function () {
   customRequiredFieldsValidation(this.getUpdate(), TokenPriceSchema.obj);
 });
 
+/**
+ * Adds token price data for tokens that already exist in db
+ *
+ * @param text  Comment for parameter ´text´.
+ * @event emits a token price update event if is latest update
+ * @returns
+ */
 TokenPriceSchema.statics.addData = async function (
   tokenPrices: ITokenPrice[]
 ): Promise<DatabaseUpdateResult> {
@@ -67,9 +78,18 @@ TokenPriceSchema.statics.addData = async function (
   await Promise.all(
     tokenPrices.map(async (tokenPrice) => {
       try {
-        let tokenDoc = await Token.findOne({ uid: tokenPrice.token.uid });
-        if (tokenDoc) {
-          tokenPrice["token"] = tokenDoc.id;
+        Logger.debug({
+          at: "Database#addData",
+          message: `Token price token filter`,
+          tokenFilter: tokenPrice.token,
+        });
+        if (typeof tokenPrice.token !== "string") {
+          // need to get the id from the doc if id isn't provided
+          let tokenDoc = await Token.findOne(tokenPrice.token);
+          tokenDoc ? (tokenPrice.token = tokenDoc.id) : null;
+        }
+        if (tokenPrice.token !== null) {
+          // add token price update even if not latest
           let filter: FilterQuery<ITokenPriceDoc> = {
             token: tokenPrice.token,
             lastUpdated: tokenPrice.lastUpdated,
@@ -85,14 +105,29 @@ TokenPriceSchema.statics.addData = async function (
           updateRes.modifiedCount = updateRes.modifiedCount + res.modifiedCount;
           doc ? updateRes.modifiedIds.push(doc.id) : "";
           updateRes.upsertedIds.push(res.upsertedId.toString());
+          if (_isLatestUpdate(doc, tokenPrice)) {
+            Logger.debug({
+              at: "Database#addData",
+              message: `Token price provided is latest. Emitting token price change event.`,
+              current: doc?.lastUpdated,
+              update: tokenPrice.lastUpdated,
+            });
+            let updatedDoc = await TokenPrice.findOne(filter);
+            if (!updatedDoc)
+              throw new Error(
+                "Can't find updated token price doc for price change event"
+              );
+            _emitOnPriceChange(doc, updatedDoc);
+          }
         } else {
-          throw new Error(`Token id not found for token price for token`);
+          throw new Error(`Token uid not found for token price`);
         }
       } catch (err) {
         updateRes.invalidCount = updateRes.invalidCount + 1;
         Logger.error({
           at: "Database#addData",
           message: `Error updating token price.`,
+          tokenUid: tokenPrice.token,
           tokenPrice: tokenPrice.id,
           error: err,
         });
@@ -107,13 +142,20 @@ TokenPriceSchema.statics.addData = async function (
 };
 
 TokenPriceSchema.statics.findLatestTokenPriceFromSource = async function (
-  token: IToken,
+  tokenUid: string,
   source: ClientNames
 ): Promise<ITokenPriceDoc | null> {
+  return _findLatestTokenPrice(tokenUid, source);
+};
+
+const _findLatestTokenPrice = async (
+  tokenUid: string,
+  source: ClientNames
+): Promise<ITokenPriceDoc | null> => {
+  // TODO - update so source can be empty and find across all sources
   let latestTokenPrice = await TokenPrice.findOne({
     token: await Token.find({
-      network: token.network,
-      address: token.address,
+      uid: tokenUid,
     }),
     source: source,
   })
@@ -121,6 +163,37 @@ TokenPriceSchema.statics.findLatestTokenPriceFromSource = async function (
     .populate("token");
   // .lean();
   return latestTokenPrice;
+};
+
+const _isLatestUpdate = (
+  current: ITokenPriceDoc | null,
+  update: ITokenPrice
+): boolean => {
+  if (current == null) return true;
+  else return update.lastUpdated > current.lastUpdated;
+};
+
+const _emitOnPriceChange = (
+  originalDoc: ITokenPriceDoc | null,
+  updatedDoc: ITokenPriceDoc
+): void => {
+  try {
+    EventsManager.emit(EventNames.IS_TOKEN_PRICE_CHANGE, {
+      name: EventNames.IS_TOKEN_PRICE_CHANGE,
+      source: "TokenPrice#addData",
+      data: {
+        original: originalDoc?.populate("token"),
+        updated: updatedDoc.populate("token"),
+      },
+    });
+  } catch (err) {
+    Logger.error({
+      at: "Database#emitOnPriceChange",
+      message: `Couldn't emit price change event through events manager.`,
+      tokenPrice: updatedDoc.id,
+      error: err,
+    });
+  }
 };
 
 // TODO - implement and move

@@ -4,6 +4,7 @@ import {
   InMemoryCache,
   HttpLink,
   NormalizedCacheObject,
+  ApolloError,
 } from "@apollo/client/core";
 import Logger from "../lib/logger";
 import { IConfig } from "../models";
@@ -28,7 +29,7 @@ export default class GqlClient {
     });
   }
 
-  query = async (query: any) => {
+  query = async (query: any, vars?: { [key: string]: any }) => {
     try {
       Logger.info({
         client: this.client,
@@ -37,7 +38,9 @@ export default class GqlClient {
       });
       const res = await this.gqlClient.query({
         query: query,
+        variables: vars,
       });
+      if (res.error) throw new ApolloError(res.error);
       Logger.info({
         client: this.client,
         at: "Gql#query",

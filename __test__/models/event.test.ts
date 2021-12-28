@@ -24,7 +24,7 @@ describe("Collection: events", () => {
 
   it("should insert events (no overwirting/upserting)", async () => {
     let res = await Event.addData(mockEvents);
-    expect(res.insertedCount).to.equal(mockEvents.length);
+    expect(res.upsertedCount).to.equal(mockEvents.length);
   });
   it("should not insert INVALID events", async () => {
     let res = await Event.addData(mockInvalidEvents as any);

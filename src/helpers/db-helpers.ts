@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Schema, Error, QueryOptions } from "mongoose";
 import {
   Account,
@@ -20,6 +21,7 @@ import {
   DatabaseUpdateResult,
 } from "../lib/types";
 import Logger from "../lib/logger";
+import { EventsManager } from "./socket-helpers";
 
 export const defaultQueryOptions: QueryOptions = {
   // returnDocument: "after",
@@ -38,9 +40,37 @@ export const defaultSchemaOpts = {
   strict: false,
 };
 
+// Make sure all mongoose errors are logged
+mongoose.connection.on("error", (err) => {
+  Logger.error({
+    at: "_#validateMany",
+    message: `Validation failed for item.`,
+    error: err,
+  });
+});
+
+mongoose.connection.on("connected", async function (ref) {
+  await EventsManager.start();
+  Logger.debug({
+    at: "db-helpers",
+    message: `Mongoose connected event.`,
+  });
+});
+
+mongoose.connection.on("disconnected", function (ref) {
+  EventsManager.close();
+  Logger.debug({
+    at: "db-helpers",
+    message: `Mongoose disconnected event.`,
+  });
+});
+
 Schema.Types.String.checkRequired((v) => {
   return typeof v === "string";
 });
+
+// TODO Global error handling for all models
+// MyModel.events.on('error', err => console.log(err.message));
 
 export function customRequiredFieldsValidation(updateObject, schemaObject) {
   let requiredFields: string[] = [];

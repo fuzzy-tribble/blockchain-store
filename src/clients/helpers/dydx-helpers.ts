@@ -2,7 +2,7 @@
 //   ApiAccount as DydxAccount,
 //   ApiMarket as DydxMarket,
 // } from "@dydxprotocol/solo";
-import { ClientNames } from "../../lib/types";
+import { ClientNames, CollectionNames, DatabaseUpdate } from "../../lib/types";
 import { IReserve, IAccount } from "../../models";
 
 export interface DydxApiMarket {
@@ -55,7 +55,7 @@ export const parseMarketsFromApi = (
   client: ClientNames,
   network: string,
   apiMarkets: DydxApiMarket[]
-): IReserve[] => {
+): DatabaseUpdate[] => {
   let reserves: IReserve[] = apiMarkets.map((apiMarket) => {
     let tokens = apiMarket.market.split("-").map((tokenSymbol) => {
       return {
@@ -64,21 +64,26 @@ export const parseMarketsFromApi = (
       };
     });
     return {
-      address: apiMarket.market,
+      uid: apiMarket.market,
       network: network,
       client: client,
       tokens: tokens,
       ...apiMarket,
     };
   });
-  return reserves;
+  return [
+    {
+      collectionName: CollectionNames.RESERVES,
+      data: reserves,
+    },
+  ];
 };
 
 export const parseAccountsFromApi = (
   client: ClientNames,
   network: string,
   apiAccounts: DydxApiAccount[]
-): IAccount[] => {
+): DatabaseUpdate[] => {
   let accounts: IAccount[] = apiAccounts.map((apiAccount) => {
     return {
       address: apiAccount.owner,
@@ -87,5 +92,10 @@ export const parseAccountsFromApi = (
       ...apiAccount,
     };
   });
-  return accounts;
+  return [
+    {
+      collectionName: CollectionNames.ACCOUNTS,
+      data: accounts,
+    },
+  ];
 };

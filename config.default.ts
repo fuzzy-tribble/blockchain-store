@@ -9,7 +9,7 @@ const dydxConfigs: IConfig = {
   network: NetworkNames.MAINNET,
   pollFunctions: [
     {
-      name: "getNewReserves",
+      fname: "getNewReserves",
       frequency: 24 * 60 * 60 * 1000, // every 24 hours
     },
     // {
@@ -17,13 +17,14 @@ const dydxConfigs: IConfig = {
     //   frequency: 24 * 60 * 60 * 1000, // every 10 minutes
     // },
   ],
-  listenerNames: [],
+  cListeners: [],
   dataSources: {
     apis: {
       baseUrl: "https://api.dydx.exchange",
       allMarkets: "https://api.dydx.exchange/v3/markets",
     },
   },
+  subscriptions: [],
 };
 
 const coingeckoConfigs: IConfig = {
@@ -31,15 +32,15 @@ const coingeckoConfigs: IConfig = {
   network: NetworkNames.MAINNET,
   pollFunctions: [
     {
-      name: "updateTokens",
+      fname: "updateTokens",
       frequency: 24 * 60 * 60 * 1000, // every 24 hours
     },
     {
-      name: "updateTokenData",
+      fname: "updateTokenData",
       frequency: 1 * 60 * 60 * 1000, // every 1 hours
     },
   ],
-  listenerNames: [],
+  cListeners: [],
   dataSources: {
     apis: {
       // Free API* has a rate limit of 50 calls/minute
@@ -50,19 +51,77 @@ const coingeckoConfigs: IConfig = {
         "https://api.coingecko.com/api/v3/coins/markets?vs_currency=eth&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d",
     },
   },
+  subscriptions: [],
 };
 
 const chainlinkMainnetConfigs: IConfig = {
   client: ClientNames.CHAINLINK,
   network: NetworkNames.MAINNET,
   pollFunctions: [],
-  listenerNames: [],
+  subscriptions: [
+    {
+      subscribe: { fname: "subscribeToPriceChangeEvents" },
+      unsubscribe: { fname: "unsubscribeFromPriceChangeEvents" },
+    },
+  ],
+  cListeners: [],
   dataSources: {
     blockchain: {
       rpcUrl: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
       maxBlockQueryChunkSize: 100,
       contractAddress: "0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf",
-      contractAbi: [],
+      contractAbi: [
+        {
+          inputs: [],
+          name: "decimals",
+          outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "description",
+          outputs: [{ internalType: "string", name: "", type: "string" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            { internalType: "uint80", name: "_roundId", type: "uint80" },
+          ],
+          name: "getRoundData",
+          outputs: [
+            { internalType: "uint80", name: "roundId", type: "uint80" },
+            { internalType: "int256", name: "answer", type: "int256" },
+            { internalType: "uint256", name: "startedAt", type: "uint256" },
+            { internalType: "uint256", name: "updatedAt", type: "uint256" },
+            { internalType: "uint80", name: "answeredInRound", type: "uint80" },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "latestRoundData",
+          outputs: [
+            { internalType: "uint80", name: "roundId", type: "uint80" },
+            { internalType: "int256", name: "answer", type: "int256" },
+            { internalType: "uint256", name: "startedAt", type: "uint256" },
+            { internalType: "uint256", name: "updatedAt", type: "uint256" },
+            { internalType: "uint80", name: "answeredInRound", type: "uint80" },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "version",
+          outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+          stateMutability: "view",
+          type: "function",
+        },
+      ],
+      priceChangeListener: "",
     },
   },
 };
@@ -70,8 +129,20 @@ const chainlinkMainnetConfigs: IConfig = {
 const aaveMainnetConfigs: IConfig = {
   client: ClientNames.AAVE,
   network: NetworkNames.MAINNET,
-  pollFunctions: [],
-  listenerNames: [EventNames.MAJOR_TOKEN_PRICE_CHANGE],
+  pollFunctions: [
+    {
+      fname: "updateReservesList",
+      frequency: 24 * 60 * 60 * 1000, // every 24 hours
+    },
+    {
+      fname: "checkLiquidatableAccountsApi",
+      frequency: 1 * 60 * 60 * 1000, // every 1 hours
+    },
+  ],
+  subscriptions: [],
+  cListeners: [
+    [EventNames.IS_TOKEN_PRICE_CHANGE, { fname: "handleTokenPriceChange" }],
+  ],
   dataSources: {
     blockchain: {
       rpcUrl: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
@@ -997,15 +1068,15 @@ const sushiswapMainnet: IConfig = {
   network: NetworkNames.MAINNET,
   pollFunctions: [
     {
-      name: "getReserves",
+      fname: "getReserves",
       frequency: 24 * 60 * 60 * 1000, // every 24 hours
     },
     {
-      name: "updateReserves",
+      fname: "updateReserves",
       frequency: 2 * (60 * 1000), // every 2 minutes
     },
   ],
-  listenerNames: [EventNames.MAJOR_TOKEN_PRICE_CHANGE],
+  listenerNames: [EventNames.IS_TOKEN_PRICE_CHANGE],
   dataSources: {
     apis: {
       baseUrl: "https://api2.sushipro.io/",
@@ -1015,6 +1086,8 @@ const sushiswapMainnet: IConfig = {
       },
     },
   },
+  subscriptions: [],
+  cListeners: [],
 };
 
 const compound: IConfig = {
@@ -1027,6 +1100,8 @@ const compound: IConfig = {
       baseUrl: "https://api.compound.finance/api",
     },
   },
+  subscriptions: [],
+  cListeners: [],
 };
 
 const uniswapMainnet: IConfig = {
@@ -1045,6 +1120,8 @@ const uniswapMainnet: IConfig = {
       queries: {},
     },
   },
+  subscriptions: [],
+  cListeners: [],
 };
 
 export const clientConfigs = [

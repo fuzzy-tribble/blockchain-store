@@ -1,14 +1,24 @@
 import "./lib/env";
 import mongoose from "mongoose";
 import { loadClients } from "./clients";
+import EventsManager from "./helpers/socket-helpers";
 // import eventSocket from "./helpers/socket-helpers";
 
-if (!process.env.MONGODB_URL) new Error("MONGODB_URL isn't defined");
-
 async function start() {
-  await mongoose.connect(process.env.MONGODB_URL as string);
-  // mongoose.connection.readyState == 1
-  // await eventSocket.ready();
+  // Connect to DB
+  if (!process.env.MONGODB_URL) new Error("MONGODB_URL is undefined");
+  await mongoose.connect(process.env.MONGODB_URL);
+
+  if (mongoose.connection.readyState !== 1)
+    throw new Error("Mongoose didn't connect successfully");
+
+  // Connect to EventsManager
+  if (!process.env.EVENT_SOCKET_URL) new Error("EVENT_SOCKET_URL is undef");
+  if (!process.env.EVENT_SOCKET_PORT) new Error("EVENT_SOCKET_PORT is undef");
+  await EventsManager.start();
+
+  if (!EventsManager.ready)
+    throw new Error("EventsManager didn't start successfully");
 
   const clients = await loadClients();
 

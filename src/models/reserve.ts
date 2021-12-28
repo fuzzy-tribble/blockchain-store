@@ -1,3 +1,6 @@
+/**
+ * Reserve model
+ */
 import { FilterQuery, Document, model, Model, Schema, Query } from "mongoose";
 import {
   defaultSchemaOpts,
@@ -19,11 +22,6 @@ export interface IReserve {
 // DOCUMENT DEFS //
 export interface IReserveDoc extends IReserve, Document {}
 
-enum PropertyNames {
-  CLIENT = "client",
-  NETWORK = "network",
-}
-
 // MODEL DEFS //
 export interface IReserveModel extends Model<IReserveDoc> {
   addData(reserves: IReserve[]): Promise<DatabaseUpdateResult>;
@@ -31,7 +29,6 @@ export interface IReserveModel extends Model<IReserveDoc> {
     client: ClientNames,
     network: string
   ): Promise<IReserve[]>;
-  propertyNames: typeof PropertyNames;
 }
 
 // SCHEMA DEFS //
@@ -55,17 +52,10 @@ const ReserveSchemaFields: Record<keyof IReserve, any> = {
 };
 
 const ReserveSchema = new Schema(ReserveSchemaFields, defaultSchemaOpts);
-ReserveSchema.index({ client: 1, network: 1, address: 1 }, { unique: true });
+ReserveSchema.index({ client: 1, network: 1, uid: 1 }, { unique: true });
 
 ReserveSchema.pre(["updateOne"], function () {
   customRequiredFieldsValidation(this.getUpdate(), ReserveSchema.obj);
-});
-
-ReserveSchema.post(["findOneAndUpdate"], function (res) {
-  Logger.info({
-    at: "Database#postUpdateReserve",
-    message: `Reserve updated: ${res.client}.${res.network}.${res.address}.`,
-  });
 });
 
 ReserveSchema.statics.findByClientNetwork = async function (
@@ -97,6 +87,13 @@ ReserveSchema.statics.findByClientNetwork = async function (
   }
 };
 
+/**
+ * Updates/upserts by uid, client, network
+ * Adds tokens if they don't exist already,
+ * then updates/upserts reserve by uid, client, network
+ * @param reserves
+ * @returns
+ */
 ReserveSchema.statics.addData = async function (
   reserves: IReserve[]
 ): Promise<DatabaseUpdateResult> {
@@ -124,11 +121,11 @@ ReserveSchema.statics.addData = async function (
           tokenIds.push(...res.modifiedIds);
         }
         if (tokenIds.length == reserve.tokens.length) {
-          reserve["tokens"] = tokenIds;
+          reserve.tokens = tokenIds;
           let filter: FilterQuery<IReserveDoc> = {
+            uid: reserve.uid,
             network: reserve.network,
             client: reserve.client,
-            address: reserve.address,
           };
           let res = await Reserve.updateOne(
             filter,
@@ -164,7 +161,7 @@ ReserveSchema.statics.addData = async function (
   Logger.info({
     at: "Database#postUpdateReserves",
     message: `Reserves updated (nUpserted: ${updateRes.upsertedCount}, nModified: ${updateRes.modifiedCount}, nInvalid: ${updateRes.invalidCount})`,
-    details: updateRes,
+    // details: updateRes,
   });
 
   return updateRes;

@@ -4,17 +4,18 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "setup": "yarn clean:logs db:droptestdb db:updateconf",
-    "start": "ts-node src/index.ts",
-    "start:dev": "TODO",
-    "test:one": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register",
-    "test:models": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register ./__test__/models/*.test.ts",
-    "test:lib": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register ./__test__/lib/*.test.ts",
-    "test:clients": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register ./__test__/clients/*.test.ts",
-    "test:helpers": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register ./__test__/helpers/*.test.ts",
-    "test:all": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register ./__test__/**/*.test.ts",
+    "setup": "yarn clean:logs && update:configs",
     "clean:logs": "rm ./logs/*",
-    "update:configs": "NODE_ENV=test ts-node ./scripts/update-configs.ts"
+    "update:typedoc": "typedoc --out docs src/",
+    "update:configs": "NODE_ENV=test ts-node ./scripts/update-configs.ts",
+    "test:one": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register --bail",
+    "test:models": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register --bail ./__test__/models/*.test.ts",
+    "test:lib": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register --bail ./__test__/lib/*.test.ts",
+    "test:clients": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register --bail ./__test__/clients/*.test.ts",
+    "test:helpers": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register --bail ./__test__/helpers/*.test.ts",
+    "test:all": "NODE_ENV=test ./node_modules/.bin/mocha -r ts-node/register --bail ./__test__/**/*.test.ts",
+    "start": "ts-node src/index.ts",
+    "start:dev": "NODE_ENV=test ts-node ./src/index.ts"
   },
   "dependencies": {
     "@aave/protocol-js": "^4.2.0",
@@ -50,6 +51,7 @@
     "mongoose": "^6.0.12",
     "socket.io-client": "^4.3.2",
     "ts-node": "^10.2.1",
+    "typedoc": "^0.22.10",
     "typescript": "^4.4.4"
   }
 }

@@ -1,68 +1,151 @@
-// import http from "http";
-// import ioserver, { Socket, Server } from "socket.io";
-// import { io } from "socket.io-client";
-// import { eventSocketConfigs } from "../lib/config";
-// import Logger from "../lib/logger";
-// import db from "../helpers/db-helpers";
-// import { delay } from "./delay";
+import "../lib/env";
+import http from "http";
+import ioserver, { Socket as ServerSocket, Server } from "socket.io";
+import { io, Socket as ClientSocket } from "socket.io-client";
+import Logger from "../lib/logger";
+import { Event as DbEventModel, IEvent } from "../models";
+import { DatabaseUpdateResult, EventNames } from "../lib/types";
+import { delay } from "./delay";
 
-// export enum ServerEventNames {
-//   IS_LIQUIDATABLE_ACCOUNT = "isLiquidatableAccount",
-//   IS_RISKY_ACCOUNT = "isRiskyAccount",
-//   IS_ARBITRAGABLE = "isArbitragable",
-//   IS_YIELD_FARMER_TRIGGER = "isYieldFarmerTrigger",
-// }
+export class SocketEventsManager {
+  private socketUrl: string;
+  private socketPort: string;
+  public serverSocket: Server | null;
+  private localDbClientSocket: ClientSocket | null;
 
-// export class EventSocket {
-//   public server: http.Server;
-//   public socket: Server;
-//   public isConnected: boolean;
+  constructor() {
+    if (!process.env.EVENT_SOCKET_URL)
+      throw new Error("EVENT_SOCKET_URL must be defined in env");
+    this.socketUrl = process.env.EVENT_SOCKET_URL;
+    if (!process.env.EVENT_SOCKET_PORT)
+      throw new Error("EVENT_SOCKET_PORT must be defined in env");
+    this.socketPort = process.env.EVENT_SOCKET_PORT;
 
-//   constructor() {
-//     this.server = http.createServer();
-//     this.socket = new ioserver.Server(this.server);
-//     this.isConnected = false;
+    this.localDbClientSocket = null;
+    this.serverSocket = null;
+  }
 
-//     // Add connect listener
-//     this.socket.on("connect", (socket: Socket) => {
-//       Logger.info({
-//         at: "EventSocket#connected",
-//         message: `Connected with id: ${socket.id}`,
-//       });
-//       this.isConnected = true;
-//     });
-//   }
+  /**
+   * Start local client db socket and server socket
+   */
+  start = async (): Promise<void> => {
+    if (!this.localDbClientSocket) {
+      await this._setupLocalDbClientSocket();
+    } else {
+      Logger.debug({
+        at: "SocketEventsManager#start",
+        message: `Local client socket already setup`,
+      });
+    }
 
-//   ready = async (): Promise<Server> => {
-//     this._startLocalListener();
+    if (!this.serverSocket) {
+      await this._setupServerSocket();
+    } else {
+      Logger.debug({
+        at: "SocketEventsManager#start",
+        message: `EventsManager's server socket is already listening on port ${this.socketPort}`,
+      });
+    }
+  };
 
-//     Logger.info({
-//       at: "EventSocket#socketConnect",
-//       message: "Checking socket connection...",
-//     });
+  /**
+   * Gives the sockets up to 5 seconds to get connected/ready
+   * @returns sockets are ready to be used
+   */
+  isReady = async (maxWaitTimeMs: number = 10 * 1000): Promise<boolean> => {
+    let result = false;
+    let startTime = Date.now();
+    let timeElapsed = 0;
+    while (timeElapsed < maxWaitTimeMs) {
+      timeElapsed = Date.now() - startTime;
+      await delay(1 * 1000);
+      Logger.info({
+        at: "EventSocket#isReady",
+        message: `Waiting for socket to connect for ${(
+          (maxWaitTimeMs - timeElapsed) /
+          1000
+        ).toFixed(0)}s...`,
+      });
+      result =
+        this.localDbClientSocket !== null &&
+        this.localDbClientSocket.id !== undefined &&
+        this.serverSocket !== null;
+      if (result) return true;
+    }
+    return false;
+  };
 
-//     while (!this.isConnected) {
-//       await delay(2 * 1000);
-//     }
-//     return this.socket;
-//   };
+  /**
+   * Close server and disconnect all clients
+   */
+  close = () => {
+    // TODO - may not be necessary
+    this.localDbClientSocket?.close();
+    this.localDbClientSocket = null;
 
-//   _startLocalListener = (
-//     socketUrl: string = eventSocketConfigs.url,
-//     socketPort: number = eventSocketConfigs.port
-//   ) => {
-//     const clientSocket = io(`${socketUrl}:${socketPort}`);
-//     clientSocket.onAny(async (eventName, ...args) => {
-//       Logger.info({
-//         at: "EventSocket#localListener",
-//         message: `Listener heard event: ${eventName}`,
-//       });
-//       await db.addEvent(eventName, { ...args });
-//     });
-//   };
-// }
+    // Close server and disconnect all clients (also closes http server)
+    this.serverSocket?.close();
+    this.serverSocket = null;
+  };
 
-// const eventSocket = new EventSocket();
-// eventSocket.socket.listen(eventSocketConfigs.port);
+  emit = (eventName: string, ...args: any): boolean => {
+    if (!this.serverSocket)
+      throw new Error("Server socket must first be initialized");
+    return this.serverSocket.emit(eventName, ...args);
+  };
 
-// export default eventSocket;
+  private _setupServerSocket = async (): Promise<void> => {
+    this.serverSocket = new ioserver.Server(http.createServer());
+    this.serverSocket.on("connect", (socket: ServerSocket) => {
+      Logger.info({
+        at: "EventSocket#connectionListener",
+        message: `Connected with id: ${socket.id}`,
+      });
+    });
+    this.serverSocket.on("connect_error", (socket: ServerSocket) => {
+      Logger.info({
+        at: "EventSocket#connectionListener",
+        message: `Connect error.`,
+      });
+    });
+    this.serverSocket.on("disconnect", (socket: ServerSocket) => {
+      Logger.info({
+        at: "EventSocket#connectionListener",
+        message: `Disconnected.`,
+      });
+    });
+    this.serverSocket.listen(parseInt(this.socketPort));
+  };
+
+  private _setupLocalDbClientSocket = async (): Promise<void> => {
+    // Setup local client (listen for any event and add to db)
+    this.localDbClientSocket = io(`${this.socketUrl}:${this.socketPort}`);
+    this.localDbClientSocket.onAny(
+      async (eventName: EventNames, eventData: IEvent) => {
+        await this._handleAddToDb(eventName, eventData);
+      }
+    );
+  };
+  private _handleAddToDb = async (
+    eventName: EventNames,
+    eventData: IEvent
+  ): Promise<void> => {
+    let dbRes: DatabaseUpdateResult | null = null;
+    Logger.info({
+      at: "EventSocket#dbListener",
+      message: `Listener heard event: ${eventName}`,
+      eventData: eventData,
+    });
+    try {
+      dbRes = await DbEventModel.addData([eventData]);
+    } catch (err) {
+      Logger.error({
+        at: "EventSocket#dbListener",
+        dbRes: dbRes?.errors,
+        err: err,
+      });
+    }
+  };
+}
+
+export const EventsManager = new SocketEventsManager();

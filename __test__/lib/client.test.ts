@@ -52,4 +52,8 @@ describe("client", () => {
   //   ).to.be.greaterThan(0);
   //   testClient.stop();
   // }).timeout(10 * 1000);
+
+  it("should add listeners / subscribers - TODO", async () => {
+    // TODO
+  });
 });

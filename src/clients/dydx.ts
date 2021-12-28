@@ -6,6 +6,7 @@ import {
   ClientFunctionResult,
   ClientNames,
   CollectionNames,
+  DatabaseUpdate,
 } from "../lib/types";
 import {
   parseMarketsFromApi,
@@ -18,8 +19,7 @@ export default class DydxSolo extends Client {
       success: false,
       client: this.conf.client,
       network: this.conf.network,
-      collection: CollectionNames.ACCOUNTS,
-      data: null,
+      data: [],
     };
     const accounts = await this._getLiquidatableAccountsFromApi();
     if (accounts) {
@@ -34,8 +34,7 @@ export default class DydxSolo extends Client {
       success: false,
       client: this.conf.client,
       network: this.conf.network,
-      collection: CollectionNames.RESERVES,
-      data: null,
+      data: [],
     };
     const accounts = await this._getMarketsFromApi();
     if (accounts) {
@@ -45,9 +44,13 @@ export default class DydxSolo extends Client {
     return res;
   };
 
-  _getLiquidatableAccountsFromApi = async (): Promise<IAccount[] | null> => {
+  _getLiquidatableAccountsFromApi = async (): Promise<
+    DatabaseUpdate[] | null
+  > => {
     // TODO - accounts url doesn't work...check it out
-    let formattedAccounts: IAccount[] = [];
+    let dbUpdate: DatabaseUpdate[] | null = null;
+    if (!this.conf.dataSources.apis)
+      throw new Error("Api conf must be present in confs provided.");
     const liquidatableAccountsRequest: AxiosRequestConfig = {
       url: `${this.conf.dataSources.apis.baseUrl}/v3/accounts`,
       method: "get",
@@ -58,27 +61,29 @@ export default class DydxSolo extends Client {
     };
     const res = await apiRequest(this.conf.client, liquidatableAccountsRequest);
     if (res !== null && res.hasOwnProperty("accounts")) {
-      formattedAccounts = parseAccountsFromApi(
+      dbUpdate = parseAccountsFromApi(
         this.conf.client,
         this.conf.network,
         res.accounts
       );
     }
-    return formattedAccounts;
+    return dbUpdate;
   };
 
-  _getMarketsFromApi = async (): Promise<IReserve[] | null> => {
-    let formattedReserves: IReserve[] = [];
+  _getMarketsFromApi = async (): Promise<DatabaseUpdate[] | null> => {
+    let dbUpdate: DatabaseUpdate[] | null = null;
+    if (!this.conf.dataSources.apis)
+      throw new Error("Api conf must be present in confs provided.");
     const res = await apiRequest(this.conf.client, {
       url: this.conf.dataSources.apis.allMarkets,
     });
     if (res !== null && res.hasOwnProperty("markets")) {
-      formattedReserves = parseMarketsFromApi(
+      dbUpdate = parseMarketsFromApi(
         this.conf.client,
         this.conf.network,
         Object.values(res.markets)
       );
     }
-    return formattedReserves;
+    return dbUpdate;
   };
 }

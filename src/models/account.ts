@@ -1,3 +1,6 @@
+/**
+ * Account model
+ */
 import {
   Document,
   FilterQuery,
@@ -79,6 +82,11 @@ AccountSchema.post(["findOneAndUpdate"], function (res) {
   });
 });
 
+/**
+ * Updates/upserts accounts by address, client, network
+ * @param accounts
+ * @returns
+ */
 AccountSchema.statics.addData = async function (
   accounts: IAccount[]
 ): Promise<DatabaseUpdateResult> {
@@ -118,7 +126,7 @@ AccountSchema.statics.addData = async function (
   );
   Logger.info({
     at: "Database#postUpdateAccount",
-    message: `Accounts updated (nUpserted: ${updateRes.upsertedCount}, nModified: ${updateRes.modifiedCount})`,
+    message: `Accounts updated (nUpserted: ${updateRes.upsertedCount}, nModified: ${updateRes.modifiedCount}, nInvalid: ${updateRes.invalidCount})`,
   });
   return updateRes;
 };

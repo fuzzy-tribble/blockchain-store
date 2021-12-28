@@ -5,6 +5,8 @@ import {
   Config,
   IEvent,
   AccountReserve,
+  Reserve,
+  ITokenPrice,
 } from "../models";
 import Client from "../lib/client";
 import Blockchain from "../helpers/blockchain-helpers";
@@ -36,6 +38,26 @@ export default class Aave extends Client {
     this.gql = new GqlClient(conf);
   }
 
+  setup = async (): Promise<void> => {
+    let res = await this.bc.connect();
+    if (!res) throw Error(`Client setup failed: ${this.conf.client}`);
+  };
+
+  updateReservesList = async (): Promise<ClientFunctionResult> => {
+    let res: ClientFunctionResult = {
+      success: false,
+      client: this.conf.client,
+      network: this.conf.network,
+      data: [],
+    };
+    const reserves = await this._fetchReservesListFromGql();
+    if (reserves) {
+      res.success = true;
+      res.data = reserves;
+    }
+    return res;
+  };
+
   checkLiquidatableAccountsApi = async (): Promise<ClientFunctionResult> => {
     let res: ClientFunctionResult = {
       success: false,
@@ -49,6 +71,79 @@ export default class Aave extends Client {
       res.data = liqAccounts;
     }
     return res;
+  };
+
+  handleEvent = async (eventName: string, data: any): Promise<void> => {
+    switch (eventName) {
+      case EventNames.TOKEN_PRICE_CHANGE:
+        await this._handleTokenPriceChange(data);
+        break;
+      default:
+        throw new Error("TODO implment");
+    }
+  };
+
+  private _handleTokenPriceChange = async (eventData: IEvent): Promise<void> => {
+    let tokenId = (eventData.data as ITokenPrice).token
+    let aaveAccountReserveIdList = AccountReserve.findByClientNetworkToken(this.client, this.network, tokenId)
+    await this._fetchIfUsingTokenAsCollateralFromGql(aaveAccountReserveIdList)
+    // finish adding data to db
+  };
+
+  private _fetchIfUsingTokenAsCollateralFromGql = async (aaveUserReserveId: string): Promise<void> {
+    // api fetch
+    let accountReserves = []
+    
+    accountReserves.forEach((ar) => {
+      let hf = calculateHealthFactor()
+      if hf < 1 _ BUFFER {
+        Event.addData({
+          name: EventNames.LIQUIDATABLE_ACCOUNT
+          
+          data: ar
+        })
+      }
+    })
+  };
+
+  private _fetchReservesListFromGql = async (): Promise<
+    DatabaseUpdate[] | null
+  > => {
+    // TODO - do this through gql client??
+    if (!this.conf.dataSources.graphql)
+      throw new Error("Api conf must be present in confs provided.");
+    const res = await this.gql.query(
+      this.conf.dataSources.graphql.queries.GET_RESERVES_LIST
+    );
+    if (res) {
+      let parsedData = parseReservesFromGql(
+        this.conf.client,
+        this.conf.network,
+        res.data.reserves
+      );
+      return parsedData;
+    } else {
+      return null;
+    }
+  };
+
+  private _fetchLiquidatableAccountReservesFromApi = async () => {
+    if (!this.conf.dataSources.apis)
+      throw new Error("Api conf must be present in confs provided.");
+    const { data } = await apiRequest(this.conf.client, {
+      method: "GET",
+      url: this.conf.dataSources.apis.liquidatableAccountReserves,
+    });
+    if (data) {
+      const parsedData = parseLiquidatableAccountReservesFromApi(
+        this.conf.client,
+        this.conf.network,
+        data
+      );
+      return parsedData;
+    } else {
+      return null;
+    }
   };
 
   // findNewAccounts = async (): Promise<ClientFunctionResult> => {
@@ -66,21 +161,6 @@ export default class Aave extends Client {
   //   }
   //   return res;
   // };
-
-  updateReservesList = async (): Promise<ClientFunctionResult> => {
-    let res: ClientFunctionResult = {
-      success: false,
-      client: this.conf.client,
-      network: this.conf.network,
-      data: [],
-    };
-    const reserves = await this._fetchReservesListFromGql();
-    if (reserves) {
-      res.success = true;
-      res.data = reserves;
-    }
-    return res;
-  };
 
   // updateReservesPriceData = async (): Promise<ClientFunctionResult> => {
   //   // update reserves if _isOld or _isRisky
@@ -104,25 +184,6 @@ export default class Aave extends Client {
   //   // TODO - if client/network reserves have token
   //   // TODO - update client account health scores with that token
   // };
-
-  private _fetchLiquidatableAccountReservesFromApi = async () => {
-    if (!this.conf.dataSources.apis)
-      throw new Error("Api conf must be present in confs provided.");
-    const { data } = await apiRequest(this.conf.client, {
-      method: "GET",
-      url: this.conf.dataSources.apis.liquidatableAccountReserves,
-    });
-    if (data) {
-      const parsedData = parseLiquidatableAccountReservesFromApi(
-        this.conf.client,
-        this.conf.network,
-        data
-      );
-      return parsedData;
-    } else {
-      return null;
-    }
-  };
 
   // private _getAccountsFromBlockchain = async (
   //   toBlock: number | "latest" = "latest"
@@ -159,27 +220,6 @@ export default class Aave extends Client {
   //   const allUpdatedActiveUsers = await Promise.all(promises);
   //   return allUpdatedActiveUsers;
   // };
-
-  private _fetchReservesListFromGql = async (): Promise<
-    DatabaseUpdate[] | null
-  > => {
-    // TODO - do this through gql client??
-    if (!this.conf.dataSources.graphql)
-      throw new Error("Api conf must be present in confs provided.");
-    const res = await this.gql.query(
-      this.conf.dataSources.graphql.queries.GET_RESERVES_LIST
-    );
-    if (res) {
-      let parsedData = parseReservesFromGql(
-        this.conf.client,
-        this.conf.network,
-        res.data.reserves
-      );
-      return parsedData;
-    } else {
-      return null;
-    }
-  };
 
   // private _updateActiveAccountData = async (
   //   account: IAccount

@@ -26,3 +26,6 @@ tmp
 
 # Mongo DB volume
 mongo-volume
+
+# # Typedoc stuff
+# docs

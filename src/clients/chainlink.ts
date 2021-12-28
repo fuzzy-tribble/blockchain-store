@@ -14,6 +14,10 @@ export default class Chainlink extends Client {
     await this.bc.connect();
   };
 
+  subscribeToPriceChangeEvents = async (): Promise<boolean> => {
+    return await this._addPriceChangeBlockchainListener();
+  };
+
   tokenPriceListener = async () => {};
 
   private _fetchLatestPricesFromBlockchain = async (
@@ -25,10 +29,17 @@ export default class Chainlink extends Client {
     return null;
   };
 
-  private _addBlockchainListener = async (
-    listenerName: string
-  ): Promise<boolean> => {
-    return await this.bc.addListener(listenerName);
+  private _addPriceChangeBlockchainListener = async (): Promise<boolean> => {
+    if (
+      !(
+        this.conf.dataSources.blockchain &&
+        this.conf.blockchain.priceChangeListener
+      )
+    )
+      throw new Error("Listener doesn't exist in conf");
+    return await this.bc.addListener(
+      this.conf.dataSources.blockchain.priceChangeListener
+    );
     // TODO - STOPPED HERE (how many tokens are on this network? too many to listen to all of them? then maybe select the most important ones?)
   };
 }

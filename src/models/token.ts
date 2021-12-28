@@ -1,3 +1,7 @@
+/**
+ * Token model
+ */
+
 import { Document, FilterQuery, model, Model, Schema } from "mongoose";
 import Logger from "../lib/logger";
 import { DatabaseUpdateResult } from "../lib/types";
@@ -49,13 +53,11 @@ TokenSchema.pre(["updateOne"], function () {
   customRequiredFieldsValidation(this.getUpdate(), TokenSchema.obj);
 });
 
-// TokenSchema.post(["findOneAndUpdate"], function (res) {
-//   Logger.info({
-//     at: "Database#postUpdateToken",
-//     message: `Token updated: ${res.address}.${res.network}.`,
-//   });
-// });
-
+/**
+ * Updates/upserts tokens by uid
+ * @param tokens
+ * @returns
+ */
 TokenSchema.statics.addData = async function (
   tokens: IToken[]
 ): Promise<DatabaseUpdateResult> {

@@ -1,19 +1,17 @@
 import {
   ReserveData as AaveReserveData,
   UserSummaryData as AaveAccountData,
-  v2,
 } from "@aave/protocol-js";
+import {
+  formatReserves,
+  formatUserSummaryData,
+} from "@aave/protocol-js/dist/v2/computations-and-formatting";
+import BigNumber from "bignumber.js";
 import { Interface, LogDescription } from "@ethersproject/abi";
 import { Log } from "@ethersproject/abstract-provider";
 import { FilterQuery } from "mongoose";
 import { mockTokens } from "../../../__test__/mockData";
-import {
-  ClientNames,
-  NetworkNames,
-  DbBn,
-  CollectionNames,
-  DatabaseUpdate,
-} from "../../lib/types";
+import { ClientNames, CollectionNames, DatabaseUpdate } from "../../lib/types";
 import {
   IAccount,
   IAccountReserve,
@@ -22,7 +20,6 @@ import {
   ITokenPrice,
   Reserve,
 } from "../../models";
-import { ITokenDoc } from "../../models/token";
 import { AaveApiAccountReserve, AaveGqlReserve } from "./aave-types";
 
 // https://github.com/aave/aave-js/blob/58feb26dbbc81e410738a962342d8cab5376b660/src/tx-builder/types/index.ts
@@ -161,6 +158,17 @@ export const parseLiquidatableAccountReservesFromApi = (
       data: parsedAccounts,
     },
   ];
+};
+
+export const calculateHealthFactor = (): number => {
+  let userSummary = v2.formatUserSummaryData(
+    poolReservesData,
+    rawUserReserves,
+    userAddress.toLowerCase(),
+    Math.floor(Date.now() / 1000)
+  );
+
+  return 0;
 };
 
 // export const parseAccountsFromBorrowTransactionLogs = (

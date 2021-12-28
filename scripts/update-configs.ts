@@ -4,12 +4,13 @@ import { Config } from "../src/models";
 import { clientConfigs } from "../config.default";
 
 const updateConfigs = async () => {
-  Logger.info({
+  Logger.debug({
     at: "Scritpts#writeConfig",
     message: `Writing default configs to config collection...`,
   });
   try {
-    await mongoose.connect(process.env.MONGODB_URL as string);
+    if (!process.env.MONGODB_URL) throw Error("MONGODB_URL must be defined.");
+    await mongoose.connect(process.env.MONGODB_URL);
     let writes = clientConfigs.map((conf) => {
       return {
         updateOne: {
@@ -27,8 +28,7 @@ const updateConfigs = async () => {
 
     Logger.info({
       at: "Scritpts#writeConfig",
-      message: `Updated config collection.`,
-      res: res,
+      message: `Updated config collection (nUpserted: ${res.nUpserted}, nInserted: ${res.nInserted}, nModified: ${res.nModified})`,
     });
   } catch (err) {
     Logger.error({
@@ -37,6 +37,7 @@ const updateConfigs = async () => {
       error: err,
     });
   } finally {
+    // EventsManager.close();
     await mongoose.connection.close();
   }
 };
